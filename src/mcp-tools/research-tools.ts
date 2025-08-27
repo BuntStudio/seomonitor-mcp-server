@@ -11,32 +11,36 @@ export class ResearchTools {
   static getRelatedKeywordsDefinition() {
     return {
       name: 'get_related_keywords',
-      description: 'Find related keyword suggestions',
+      description: 'Find related keyword suggestions for a topic',
       inputSchema: {
         type: 'object',
         properties: {
+          campaign_id: {
+            type: 'integer',
+            description: 'Required campaign ID',
+          },
           keyword: {
             type: 'string',
-            description: 'Target keyword',
-          },
-          country_code: {
-            type: 'string',
-            description: 'Country code (e.g., US, GB, DE)',
-          },
-          language_code: {
-            type: 'string',
-            description: 'Optional: Language code (e.g., en, de, fr)',
-          },
-          search_data: {
-            type: 'boolean',
-            description: 'Optional: Include search volume data',
+            description: 'Required: Topic keyword for which to find related keywords',
           },
           limit: {
-            type: 'number',
-            description: 'Optional: Results limit',
+            type: 'integer',
+            description: 'Optional: Results limit (max 1000)',
+          },
+          offset: {
+            type: 'integer',
+            description: 'Optional: Pagination offset',
+          },
+          order_by: {
+            type: 'string',
+            description: 'Optional: Sort field',
+          },
+          order_direction: {
+            type: 'string',
+            description: 'Optional: Sort direction (asc or desc)',
           },
         },
-        required: ['keyword', 'country_code'],
+        required: ['campaign_id', 'keyword'],
       },
     };
   }
@@ -47,24 +51,20 @@ export class ResearchTools {
   static getTopicOverviewDefinition() {
     return {
       name: 'get_topic_overview',
-      description: 'Comprehensive topic analysis',
+      description: 'Get aggregated search, SERP, and visibility data for topic keywords',
       inputSchema: {
         type: 'object',
         properties: {
+          campaign_id: {
+            type: 'integer',
+            description: 'Required campaign ID',
+          },
           keyword: {
             type: 'string',
-            description: 'Topic keyword',
-          },
-          country_code: {
-            type: 'string',
-            description: 'Country code (e.g., US, GB, DE)',
-          },
-          language_code: {
-            type: 'string',
-            description: 'Optional: Language code (e.g., en, de, fr)',
+            description: 'Required: Topic keyword for analysis',
           },
         },
-        required: ['keyword', 'country_code'],
+        required: ['campaign_id', 'keyword'],
       },
     };
   }
@@ -209,12 +209,13 @@ export class ResearchTools {
    * Execute get_related_keywords tool
    */
   static async executeGetRelatedKeywords(args: any, seoClient: SEOMonitorClient) {
-    const { keyword, country_code, language_code, limit } = args;
+    const { campaign_id, keyword, limit, offset, order_by, order_direction } = args;
 
-    const result = await seoClient.getRelatedKeywords(keyword, {
-      country: country_code,
-      language: language_code,
+    const result = await seoClient.getRelatedKeywords(campaign_id, keyword, {
       limit,
+      offset,
+      orderBy: order_by,
+      orderDirection: order_direction,
     });
 
     return {
@@ -231,12 +232,9 @@ export class ResearchTools {
    * Execute get_topic_overview tool
    */
   static async executeGetTopicOverview(args: any, seoClient: SEOMonitorClient) {
-    const { keyword, country_code, language_code } = args;
+    const { campaign_id, keyword } = args;
 
-    const result = await seoClient.getTopicOverview(keyword, {
-      country: country_code,
-      language: language_code,
-    });
+    const result = await seoClient.getTopicOverview(campaign_id, keyword);
 
     return {
       content: [

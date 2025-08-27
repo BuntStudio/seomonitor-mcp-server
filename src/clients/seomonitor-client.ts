@@ -352,33 +352,31 @@ export class SEOMonitorClient {
   }
 
   // Keyword Research
-  async getRelatedKeywords(topic: string, options?: {
-    country?: string;
-    language?: string;
+  async getRelatedKeywords(campaignId: number, keyword: string, options?: {
     limit?: number;
+    offset?: number;
+    orderBy?: string;
+    orderDirection?: string;
   }): Promise<any[]> {
     const params = new URLSearchParams();
-    params.append('topic', topic);
+    params.append('campaign_id', campaignId.toString());
+    params.append('keyword', keyword);
     
-    if (options?.country) params.append('country', options.country);
-    if (options?.language) params.append('language', options.language);
     if (options?.limit) params.append('limit', options.limit.toString());
+    if (options?.offset) params.append('offset', options.offset.toString());
+    if (options?.orderBy) params.append('order_by', options.orderBy);
+    if (options?.orderDirection) params.append('order_direction', options.orderDirection);
 
-    const response = await this.client.get(`/research/v3.0/topic/related-keywords?${params}`);
+    const response = await this.client.get(`/research/v3.0/related-keywords?${params}`);
     return response.data;
   }
 
-  async getTopicOverview(topic: string, options?: {
-    country?: string;
-    language?: string;
-  }): Promise<any> {
+  async getTopicOverview(campaignId: number, keyword: string): Promise<any> {
     const params = new URLSearchParams();
-    params.append('topic', topic);
-    
-    if (options?.country) params.append('country', options.country);
-    if (options?.language) params.append('language', options.language);
+    params.append('campaign_id', campaignId.toString());
+    params.append('keyword', keyword);
 
-    const response = await this.client.get(`/research/v3.0/topic/overview?${params}`);
+    const response = await this.client.get(`/research/v3.0/topic-overview?${params}`);
     return response.data;
   }
 
