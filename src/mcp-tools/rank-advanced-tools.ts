@@ -456,6 +456,53 @@ export class RankAdvancedTools {
   }
 
   /**
+   * Execute get_serp_feature_presence tool
+   */
+  static async executeGetSerpFeaturePresence(args: any, seoClient: SEOMonitorClient) {
+    const { campaign_id, start_date, end_date, keyword_ids, group_id, limit, offset } = args;
+
+    const result = await seoClient.getSerpFeaturePresence(campaign_id, {
+      startDate: start_date,
+      endDate: end_date,
+      keywordIds: keyword_ids,
+      groupId: group_id,
+      limit,
+      offset,
+    });
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
+    };
+  }
+
+  /**
+   * Execute get_ranking_pages tool
+   */
+  static async executeGetRankingPages(args: any, seoClient: SEOMonitorClient) {
+    const { campaign_id, start_date, end_date, keyword_ids, group_id, limit, offset } = args;
+
+    const result = await seoClient.getRankingPages(campaign_id, {
+      groupId: group_id,
+      limit,
+      offset,
+    });
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
+    };
+  }
+
+  /**
    * Get all tool definitions for this category
    */
   static getAllDefinitions() {
@@ -489,16 +536,9 @@ export class RankAdvancedTools {
       case 'get_keyword_import_status':
         return this.executeGetKeywordImportStatus(args, seoClient);
       case 'get_serp_feature_presence':
+        return this.executeGetSerpFeaturePresence(args, seoClient);
       case 'get_ranking_pages':
-        // These tools need specific endpoints that aren't in the provided OpenAPI spec
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `Tool ${toolName} endpoint not found in OpenAPI specification. Please verify the correct endpoint path.`,
-            },
-          ],
-        };
+        return this.executeGetRankingPages(args, seoClient);
       default:
         throw new Error(`Unknown advanced rank tracking tool: ${toolName}`);
     }

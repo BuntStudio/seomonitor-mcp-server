@@ -445,6 +445,119 @@ export class SEOMonitorClient {
     return response.data;
   }
 
+  // Keyword Vault
+  async getKeywordVaultData(campaignId: number, listName: string, options?: {
+    limit?: number;
+    offset?: number;
+    orderBy?: string;
+    orderDirection?: string;
+    search?: string;
+    includeUnqualified?: boolean;
+    domain?: string;
+  }): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId.toString());
+    params.append('list', listName);
+    
+    if (options?.limit) params.append('limit', options.limit.toString());
+    if (options?.offset) params.append('offset', options.offset.toString());
+    if (options?.orderBy) params.append('order_by', options.orderBy);
+    if (options?.orderDirection) params.append('order_direction', options.orderDirection);
+    if (options?.search) params.append('search', options.search);
+    if (options?.includeUnqualified) params.append('include_unqualified', options.includeUnqualified.toString());
+    if (options?.domain) params.append('domain', options.domain);
+
+    const response = await this.client.get(`/keyword-vault/v3.0/get-keyword-data-by-list?${params}`);
+    return response.data;
+  }
+
+  async getKeywordVaultOverview(campaignId: number, listName: string): Promise<any> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId.toString());
+    params.append('list', listName);
+
+    const response = await this.client.get(`/keyword-vault/v3.0/get-overview-data?${params}`);
+    return response.data;
+  }
+
+  // SERP Feature Presence
+  async getSerpFeaturePresence(campaignId: number, options?: {
+    startDate: string;
+    endDate: string;
+    groupId?: string;
+    keywordIds?: string;
+    limit?: number;
+    offset?: number;
+    search?: string;
+  }): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId.toString());
+    params.append('start_date', options?.startDate || '');
+    params.append('end_date', options?.endDate || '');
+    
+    if (options?.groupId) params.append('group_id', options.groupId);
+    if (options?.keywordIds) params.append('keyword_ids', options.keywordIds);
+    if (options?.limit) params.append('limit', options.limit.toString());
+    if (options?.offset) params.append('offset', options.offset.toString());
+    if (options?.search) params.append('search', options.search);
+
+    const response = await this.client.get(`/rank-tracker/v3.0/keywords/serp-feature-presence?${params}`);
+    return response.data;
+  }
+
+  // Ranking Pages
+  async getRankingPages(campaignId: number, options?: {
+    groupId?: string;
+    limit?: number;
+    offset?: number;
+    search?: string;
+  }): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId.toString());
+    
+    if (options?.groupId) params.append('group_id', options.groupId);
+    if (options?.limit) params.append('limit', options.limit.toString());
+    if (options?.offset) params.append('offset', options.offset.toString());
+    if (options?.search) params.append('search', options.search);
+
+    const response = await this.client.get(`/rank-tracker/v3.0/keywords/ranking-pages?${params}`);
+    return response.data;
+  }
+
+  // Research Keywords
+  async getResearchKeywords(campaignId: number, keywords: string, options?: {
+    limit?: number;
+    offset?: number;
+  }): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId.toString());
+    params.append('keywords', keywords);
+    
+    if (options?.limit) params.append('limit', options.limit.toString());
+    if (options?.offset) params.append('offset', options.offset.toString());
+
+    const response = await this.client.get(`/research/v3.0/keywords?${params}`);
+    return response.data;
+  }
+
+  // Research Ranking Data
+  async getResearchRankingData(campaignId: number, keywords: string, options?: {
+    domains?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId.toString());
+    params.append('keywords', keywords);
+    
+    if (options?.domains) params.append('domains', options.domains);
+    if (options?.limit) params.append('limit', options.limit.toString());
+    if (options?.offset) params.append('offset', options.offset.toString());
+
+    const response = await this.client.get(`/research/v3.0/ranking-data?${params}`);
+    return response.data;
+  }
+
 
   // Update session (useful for refreshing API keys)
   updateSession(newSession: UserSession) {

@@ -143,28 +143,28 @@ export class ResearchTools {
   static getResearchKeywordDataDefinition() {
     return {
       name: 'get_research_keyword_data',
-      description: 'Research-specific keyword metrics',
+      description: 'Research-specific keyword metrics and SERP data',
       inputSchema: {
         type: 'object',
         properties: {
+          campaign_id: {
+            type: 'integer',
+            description: 'Required campaign ID',
+          },
           keywords: {
             type: 'string',
-            description: 'Keyword list (comma-separated)',
+            description: 'Required: Comma-separated list of keywords',
           },
-          country_code: {
-            type: 'string',
-            description: 'Country code (e.g., US, GB, DE)',
+          limit: {
+            type: 'integer',
+            description: 'Optional: Results limit',
           },
-          language_code: {
-            type: 'string',
-            description: 'Optional: Language code (e.g., en, de, fr)',
-          },
-          search_data: {
-            type: 'boolean',
-            description: 'Optional: Include search volume data',
+          offset: {
+            type: 'integer',
+            description: 'Optional: Pagination offset',
           },
         },
-        required: ['keywords', 'country_code'],
+        required: ['campaign_id', 'keywords'],
       },
     };
   }
@@ -175,32 +175,32 @@ export class ResearchTools {
   static getResearchRankingDataDefinition() {
     return {
       name: 'get_research_ranking_data',
-      description: 'Ranking analysis for research',
+      description: 'SERP, search, and ranking data for keywords with competitor analysis',
       inputSchema: {
         type: 'object',
         properties: {
+          campaign_id: {
+            type: 'integer',
+            description: 'Required campaign ID',
+          },
           keywords: {
             type: 'string',
-            description: 'Keyword list (comma-separated)',
+            description: 'Required: Comma-separated list of keywords',
           },
-          domain: {
+          domains: {
             type: 'string',
-            description: 'Optional: Domain filter',
-          },
-          country_code: {
-            type: 'string',
-            description: 'Country code (e.g., US, GB, DE)',
-          },
-          language_code: {
-            type: 'string',
-            description: 'Optional: Language code (e.g., en, de, fr)',
+            description: 'Optional: Domains for comparison',
           },
           limit: {
-            type: 'number',
+            type: 'integer',
             description: 'Optional: Results limit',
           },
+          offset: {
+            type: 'integer',
+            description: 'Optional: Pagination offset',
+          },
         },
-        required: ['keywords', 'country_code'],
+        required: ['campaign_id', 'keywords'],
       },
     };
   }
@@ -293,6 +293,49 @@ export class ResearchTools {
   }
 
   /**
+   * Execute get_research_keyword_data tool
+   */
+  static async executeGetResearchKeywordData(args: any, seoClient: SEOMonitorClient) {
+    const { campaign_id, keywords, limit, offset } = args;
+
+    const result = await seoClient.getResearchKeywords(campaign_id, keywords, {
+      limit,
+      offset,
+    });
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
+    };
+  }
+
+  /**
+   * Execute get_research_ranking_data tool
+   */
+  static async executeGetResearchRankingData(args: any, seoClient: SEOMonitorClient) {
+    const { campaign_id, keywords, domains, limit, offset } = args;
+
+    const result = await seoClient.getResearchRankingData(campaign_id, keywords, {
+      domains,
+      limit,
+      offset,
+    });
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
+    };
+  }
+
+  /**
    * Get all tool definitions for this category
    */
   static getAllDefinitions() {
@@ -320,16 +363,9 @@ export class ResearchTools {
       case 'get_domain_ranking_keywords':
         return this.executeGetDomainRankingKeywords(args, seoClient);
       case 'get_research_keyword_data':
+        return this.executeGetResearchKeywordData(args, seoClient);
       case 'get_research_ranking_data':
-        // These tools need specific API endpoints in SEOMonitorClient
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `Tool ${toolName} is not yet fully implemented. The corresponding API endpoint needs to be added to SEOMonitorClient.`,
-            },
-          ],
-        };
+        return this.executeGetResearchRankingData(args, seoClient);
       default:
         throw new Error(`Unknown research tool: ${toolName}`);
     }
