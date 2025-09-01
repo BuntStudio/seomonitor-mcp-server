@@ -49,6 +49,7 @@ export class SEOMonitorClient {
   constructor(session: UserSession, logger: Logger) {
     this.session = session;
     this.logger = logger;
+    
     this.client = axios.create({
       baseURL: 'https://apigw.seomonitor.com/v3',
       headers: {
@@ -60,7 +61,7 @@ export class SEOMonitorClient {
       timeout: 30000,
     });
     
-    this.logger.info(`SEOMonitor client initialized for user ${session.userId}`);
+    this.logger.info('SEOMonitor client initialized');
 
     // Add request interceptor for logging
     this.client.interceptors.request.use(
@@ -567,4 +568,5 @@ export class SEOMonitorClient {
     this.client.defaults.headers['Authorization'] = newSession.apiKey;
     this.logger.info(`Updated SEOMonitor session for user ${newSession.userId}`);
   }
+
 }

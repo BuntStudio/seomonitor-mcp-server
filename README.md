@@ -1,5 +1,90 @@
 # SEOMonitor MCP Server
 
+A Model Context Protocol (MCP) server that provides access to SEOMonitor's API for AI assistants like Claude Desktop.
+
+## Installation & Usage
+
+### Via NPX (Recommended)
+```bash
+npx seomonitor-mcp-server
+```
+
+### Via npm Global Install
+```bash
+npm install -g seomonitor-mcp-server
+seomonitor-mcp
+```
+
+## Configuration
+
+### Environment Variables
+- `SEOMONITOR_API_KEY` (required): Your SEOMonitor API key
+
+### Claude Desktop Configuration
+
+Add this to your Claude Desktop `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "seomonitor": {
+      "command": "npx",
+      "args": ["seomonitor-mcp-server"],
+      "env": {
+        "SEOMONITOR_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+### Available Tools
+
+The server provides access to SEOMonitor's API endpoints as MCP tools:
+
+- Campaign management
+- Keyword tracking  
+- Traffic analytics
+- Research tools
+- Forecasting
+- And more...
+
+## CLI Options
+
+```bash
+seomonitor-mcp --help
+```
+
+Options:
+- `--log-level <level>`: Set log level (debug, info, warn, error)
+- `--help`: Show help message
+
+## Requirements
+
+- Node.js 18+
+- SEOMonitor API key
+
+## Development
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd seomonitor-mcp-server
+
+# Install dependencies
+npm install
+
+# Build
+npm run build
+
+# Run in development
+npm run dev
+```
+
+## License
+
+MIT
+
 A Model Context Protocol (MCP) server that provides access to SEOMonitor's comprehensive SEO API suite. This server enables AI applications like Claude Desktop to integrate real-time SEO data and insights directly into conversations.
 
 ## Features

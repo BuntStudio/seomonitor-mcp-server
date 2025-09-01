@@ -1,0 +1,34 @@
+# Development files
+src/
+.env*
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Dependencies
+node_modules/
+
+# Build artifacts
+*.tsbuildinfo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Docker (not needed for npm package)
+Dockerfile*
+docker-compose*.yml
+
+# Testing
+coverage/
+*.test.ts
+*.spec.ts
+
+# Documentation drafts
+docs/

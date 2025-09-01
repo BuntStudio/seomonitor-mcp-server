@@ -1,15 +1,12 @@
 import fs from 'fs';
 import path from 'path';
-import { config } from 'dotenv';
-
-// Load environment variables immediately
-config({ quiet: true });
+import os from 'os';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 export class Logger {
-  private logFile: string;
   private logLevel: LogLevel;
+  private logFile: string;
   private readonly levels: Record<LogLevel, number> = {
     debug: 0,
     info: 1,
@@ -17,13 +14,33 @@ export class Logger {
     error: 3
   };
 
-  constructor(logFile?: string, logLevel?: LogLevel) {
-    const logPath = process.env.LOG_PATH || path.join(process.cwd(), 'logs');
-    if (!fs.existsSync(logPath)) {
-      fs.mkdirSync(logPath, { recursive: true });
-    }
-    this.logFile = logFile || path.join(logPath, 'mcp-server.log');
+  constructor(logLevel?: LogLevel) {
     this.logLevel = logLevel || (process.env.LOG_LEVEL as LogLevel) || 'info';
+    
+    // Set up log file path
+    const logDir = process.env.LOG_DIR || os.tmpdir();
+    const logFileName = process.env.LOG_FILE || 'seomonitor-mcp.log';
+    this.logFile = path.join(logDir, logFileName);
+    
+    // Ensure log directory exists
+    try {
+      fs.mkdirSync(path.dirname(this.logFile), { recursive: true });
+    } catch (error) {
+      // If we can't create log directory, fall back to temp dir
+      this.logFile = path.join(os.tmpdir(), 'seomonitor-mcp.log');
+    }
+    
+    // Initialize log file with session start
+    this.writeToFile(`\n${'='.repeat(60)}\n[${new Date().toISOString()}] NEW MCP SERVER SESSION STARTED\n${'='.repeat(60)}\n`);
+  }
+
+  private writeToFile(logEntry: string) {
+    try {
+      fs.appendFileSync(this.logFile, logEntry);
+    } catch (error) {
+      // Fallback to stderr if file writing fails
+      process.stderr.write(`[LOG FILE ERROR] ${error}\n${logEntry}`);
+    }
   }
 
   private logMessage(level: LogLevel, message: string, data?: any) {
@@ -33,15 +50,10 @@ export class Logger {
 
     const timestamp = new Date().toISOString();
     const logData = data ? `\n${JSON.stringify(data, null, 2)}` : '';
-    const logEntry = `[${timestamp}] [${level.toUpperCase()}] ${message}${logData}`;
+    const logEntry = `[${timestamp}] [${level.toUpperCase()}] ${message}${logData}\n`;
 
-    // Always log to console
-    console.log(logEntry);
-
-    // In stdio mode, we don't write to files to avoid mixing with transport messages
-    if (!this.isStdioMode()) {
-      this.writeToFile(logEntry);
-    }
+    // Write to log file
+    this.writeToFile(logEntry);
   }
 
   debug(message: string, data?: any) {
@@ -65,31 +77,27 @@ export class Logger {
     this.info(message, data);
   }
 
-  private writeToFile(message: string) {
-    try {
-      fs.appendFileSync(this.logFile, message + '\n');
-    } catch (err) {
-      // Silently fail for file writing to avoid interfering with STDIO
-    }
-  }
-
-  // Check if we're in STDIO mode by looking at command line args or env
-  private isStdioMode(): boolean {
-    return process.argv.includes('--transport') && process.argv.includes('stdio') ||
-           !process.argv.includes('--transport') && process.env.TRANSPORT !== 'http' && process.env.TRANSPORT !== 'websocket';
-  }
-
   setLogLevel(level: LogLevel) {
     this.logLevel = level;
   }
 
-  clearLog() {
+  getLogFile(): string {
+    return this.logFile;
+  }
+
+  // Method to manually rotate logs (simple implementation)
+  rotateLogs() {
     try {
-      if (fs.existsSync(this.logFile)) {
-        fs.unlinkSync(this.logFile);
+      const stats = fs.statSync(this.logFile);
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      
+      if (stats.size > maxSize) {
+        const rotatedFile = `${this.logFile}.${Date.now()}`;
+        fs.renameSync(this.logFile, rotatedFile);
+        this.writeToFile(`\n${'='.repeat(60)}\n[${new Date().toISOString()}] LOG ROTATED - NEW SESSION\n${'='.repeat(60)}\n`);
       }
-    } catch (err) {
-      console.error('Failed to clear log file:', err);
+    } catch (error) {
+      // Ignore rotation errors
     }
   }
 }

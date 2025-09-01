@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "seomonitor": {
+      "command": "/Users/mihai/projects/sm-docker/seomonitor-mcp-server/bin/mcp-server.js",
+      "env": {
+        "SEOMONITOR_API_KEY": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImtpZCI6IjMifQ.eyJhdWQiOiJodHRwczpcL1wvYXBpZ3cuc2VvbW9uaXRvci5jb20iLCJzdWIiOiIyNjIzIiwidGVhbSI6Ijc5MSIsImV4cCI6MTc1NjcyMzIwMCwiaWF0IjoxNzI1MTg3MjAwfQ.tGRNSNtTYo2eQCq4ZXz8TsyNGmrxSdQK4W9vOC6eYYs"
+      }
+    }
+  }
+}

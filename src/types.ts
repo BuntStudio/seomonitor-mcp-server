@@ -36,32 +36,6 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 // MCP Server specific types
 export interface MCPServerConfig {
-  transport: 'stdio' | 'http' | 'websocket';
-  port?: number;
-  host?: string;
-  apiKey?: string;
-  enableAuth?: boolean;
-  corsOrigin?: string;
+  transport: 'stdio';
   logLevel?: 'debug' | 'info' | 'warn' | 'error';
-  logFile?: string;
-}
-
-export interface MCPAuthContext {
-  apiKey?: string;
-  userId?: string;
-  authenticated: boolean;
-}
-
-export interface MCPToolRequest {
-  name: string;
-  arguments: Record<string, any>;
-  authContext: MCPAuthContext;
-}
-
-export interface MCPToolResponse {
-  content: Array<{
-    type: 'text';
-    text: string;
-  }>;
-  isError?: boolean;
 }

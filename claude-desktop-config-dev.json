@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "seomonitor-dev": {
+      "command": "npx",
+      "args": [".", "--log-level", "debug"],
+      "cwd": "/Users/mihai/projects/sm-docker/seomonitor-mcp-server",
+      "env": {
+        "SEOMONITOR_API_KEY": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImtpZCI6IjU2YjBkZTU1YmY5ZGYyMDAwMTAwMDAzNGFlMTZkNTM5MzJkYzRlN2M0NWMyNzAwM2Q2MTMwYTQ3In0.eyJpc3MiOiJzZW9tb25pdG9yLmNvbSIsImlhdCI6MTQ2MDM3MjU2OCwidXNlcl9pZCI6Ijg5ODkifQ.H1j7Smj62jC-6_jDmnfijTBnU_j7EgUElSh3v8qBNHA",
+        "LOG_LEVEL": "debug",
+        "LOG_DIR": "/tmp/seomonitor-mcp-logs",
+        "LOG_FILE": "claude-desktop-debug.log"
+      }
+    }
+  }
+}

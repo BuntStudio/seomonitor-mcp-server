@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "seomonitor": {
+      "command": "npx",
+      "args": ["seomonitor-mcp-server", "--log-level", "info"],
+      "env": {
+        "SEOMONITOR_API_KEY": "your-seomonitor-jwt-token-here",
+        "LOG_LEVEL": "info",
+        "LOG_DIR": "/tmp/seomonitor-mcp-logs",
+        "LOG_FILE": "claude-desktop.log"
+      }
+    }
+  }
+}
