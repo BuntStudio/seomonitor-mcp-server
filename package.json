@@ -4,6 +4,7 @@
   "description": "SEOMonitor MCP Server - Model Context Protocol server for SEOMonitor API integration",
   "main": "dist/index.js",
   "type": "module",
+  "private": true,
   "bin": {
     "seomonitor-mcp": "bin/mcp-server.js"
   },

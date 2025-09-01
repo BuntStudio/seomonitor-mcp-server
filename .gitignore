@@ -103,3 +103,12 @@ videos/
 # Production build files that shouldn't be versioned
 build/
 public/build/
+
+# Configuration files with secrets (JSON configs)
+*claude*.json
+debug-*.json
+test-*.json
+*-config*.json
+!package.json
+!package-lock.json
+!tsconfig.json
