@@ -39,6 +39,18 @@ export class RankAdvancedTools {
             type: 'string',
             description: 'Required: Device type (desktop or mobile)',
           },
+          group_id: {
+            type: 'string',
+            description: 'Optional: Specific group ID',
+          },
+          limit: {
+            type: 'integer',
+            description: 'Optional: Results limit',
+          },
+          offset: {
+            type: 'integer',
+            description: 'Optional: Pagination offset',
+          },
         },
         required: ['campaign_id', 'device', 'start_date', 'end_date'],
       },
@@ -122,6 +134,10 @@ export class RankAdvancedTools {
           offset: {
             type: 'integer',
             description: 'Optional: Pagination offset',
+          },
+          group_id: {
+            type: 'string',
+            description: 'Optional: Specific group ID',
           },
         },
         required: ['campaign_id', 'device', 'date'],
@@ -487,6 +503,9 @@ export class RankAdvancedTools {
     const { campaign_id, start_date, end_date, keyword_ids, group_id, limit, offset } = args;
 
     const result = await seoClient.getRankingPages(campaign_id, {
+      startDate: start_date,
+      endDate: end_date,
+      keywordIds: keyword_ids,
       groupId: group_id,
       limit,
       offset,

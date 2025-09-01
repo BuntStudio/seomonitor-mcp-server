@@ -195,27 +195,67 @@ curl -X POST http://localhost:3001/api/mcp/tools/get_keyword_data \
   }'
 ```
 
-## Docker Deployment
+## Running with Docker
 
-### Development
+This project is fully containerized and can be run using Docker and Docker Compose.
+
+### Local Development Setup
+
+Follow these steps to run the MCP server locally for development.
+
+**1. Create Environment File**
+
+The Docker Compose setup requires a `.env` file for configuration. You can create one by copying the example file:
+
 ```bash
-# Build and run with Docker Compose
-docker-compose -f docker/docker-compose.yml up -d
-
-# Or build manually
-docker build -f docker/Dockerfile -t seomonitor-mcp-server .
-docker run -p 3001:3001 \
-  -e TRANSPORT=http \
-  -e SEOMONITOR_API_KEY=your-key \
-  seomonitor-mcp-server
+cp .env.example .env
 ```
 
-### Production
+**2. Configure API Key**
+
+Open the newly created `.env` file and add your SEOMonitor API key:
+
+```env
+SEOMONITOR_API_KEY=your-seomonitor-api-key-here
+```
+
+**3. Build and Run the Container**
+
+Use Docker Compose to build the image and start the server in detached mode:
+
 ```bash
-# Use production configuration
+docker-compose -f docker/docker-compose.yml up --build -d
+```
+
+The server will be available on `http://localhost:3001`.
+
+**4. Verify the Server**
+
+You can check if the server is running by accessing the health check endpoint:
+
+```bash
+curl http://localhost:3001/health
+```
+
+**5. Stop the Server**
+
+To stop the container, run:
+
+```bash
+docker-compose -f docker/docker-compose.yml down
+```
+
+### Production Deployment
+
+For production, use the `docker-compose.prod.yml` file, which is optimized for performance and scalability.
+
+```bash
+# Ensure your .env file is configured for production
+
+# Start the services
 docker-compose -f docker/docker-compose.prod.yml up -d
 
-# Scale horizontally
+# Scale the service (optional)
 docker-compose -f docker/docker-compose.prod.yml up -d --scale seomonitor-mcp=3
 ```
 

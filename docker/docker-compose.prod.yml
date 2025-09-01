@@ -5,8 +5,6 @@ services:
     image: seomonitor/mcp-server:latest
     container_name: seomonitor-mcp-server
     restart: always
-    ports:
-      - "3001:3001"
     environment:
       - NODE_ENV=production
       - TRANSPORT=http
@@ -55,14 +53,12 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro
     depends_on:
       - seomonitor-mcp
     networks:
       - mcp-network
-    profiles:
-      - production
 
 networks:
   mcp-network:

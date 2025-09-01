@@ -16,8 +16,11 @@ export class CampaignTools {
         type: 'object',
         properties: {
           campaign_ids: {
-            type: 'string',
-            description: 'Optional: Specific campaign IDs (comma-separated)',
+            type: 'array',
+            description: 'Optional: Specific campaign IDs',
+            items: {
+              type: 'integer',
+            },
           },
           company_id: {
             type: 'integer',
@@ -41,15 +44,10 @@ export class CampaignTools {
    * Execute get_tracked_campaigns tool
    */
   static async execute(args: any, seoClient: SEOMonitorClient) {
-    const { campaign_ids, company_id, limit, offset } = args;
+    const { userId, ...apiOptions } = args;
 
     try {
-      const result = await seoClient.getTrackedCampaigns({
-        campaign_ids,
-        company_id,
-        limit,
-        offset,
-      });
+      const result = await seoClient.getTrackedCampaigns(apiOptions);
 
       return {
         content: [

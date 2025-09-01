@@ -14,7 +14,7 @@ services:
       - TRANSPORT=${TRANSPORT:-http}
       - PORT=3001
       - HOST=0.0.0.0
-      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
       - API_KEY=${API_KEY}
       - ENABLE_AUTH=${ENABLE_AUTH:-false}
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
@@ -45,7 +45,7 @@ services:
       - TRANSPORT=websocket
       - PORT=3002
       - HOST=0.0.0.0
-      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
       - API_KEY=${API_KEY}
       - ENABLE_AUTH=${ENABLE_AUTH:-false}
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
@@ -66,7 +66,8 @@ services:
 
 networks:
   mcp-network:
-    driver: bridge
+    external: true
+    name: docker_mcp-network
 
 volumes:
   logs:

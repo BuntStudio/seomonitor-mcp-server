@@ -190,6 +190,8 @@ export class RankTrackingTools {
     const result = await seoClient.getKeywordData(parseInt(campaign_id), {
       startDate: start_date,
       endDate: end_date,
+      device,
+      search,
       limit,
       offset,
     });

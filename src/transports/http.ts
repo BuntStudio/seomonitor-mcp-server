@@ -113,7 +113,7 @@ export class HttpTransport {
 
         const session: UserSession = { userId, apiKey, baseUrl };
         const client = new DynamicApiClient(session);
-        const seoClient = new SEOMonitorClient(session);
+        const seoClient = new SEOMonitorClient(session, logger);
 
         this.sessions.set(userId, { client, seoClient, session });
 
@@ -217,7 +217,7 @@ export class HttpTransport {
     const { userId, apiKey, baseUrl } = args;
     const session: UserSession = { userId, apiKey, baseUrl };
     const client = new DynamicApiClient(session);
-    const seoClient = new SEOMonitorClient(session);
+    const seoClient = new SEOMonitorClient(session, logger);
     this.sessions.set(userId, { client, seoClient, session });
     return { message: `Session created successfully for user: ${userId}` };
   }

@@ -56,7 +56,7 @@ export class MCPServer {
         baseUrl: seoBaseUrl
       };
       
-      this.defaultSeoClient = new SEOMonitorClient(defaultSession);
+      this.defaultSeoClient = new SEOMonitorClient(defaultSession, logger);
       logger.info('Default SEOMonitor client initialized');
     }
   }
@@ -280,7 +280,7 @@ export class MCPServer {
 
     const session: UserSession = { userId, apiKey, baseUrl };
     const client = new DynamicApiClient(session);
-    const seoClient = new SEOMonitorClient(session);
+    const seoClient = new SEOMonitorClient(session, logger);
 
     this.sessions.set(userId, { client, seoClient, session });
     logger.info(`User session set for user: ${userId}`);

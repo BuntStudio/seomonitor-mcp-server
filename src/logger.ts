@@ -1,5 +1,9 @@
 import fs from 'fs';
 import path from 'path';
+import { config } from 'dotenv';
+
+// Load environment variables immediately
+config({ quiet: true });
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -13,59 +17,47 @@ export class Logger {
     error: 3
   };
 
-  constructor(logFile?: string, logLevel: LogLevel = 'info') {
-    this.logFile = logFile || path.join(process.cwd(), 'mcp-server.log');
-    this.logLevel = logLevel;
+  constructor(logFile?: string, logLevel?: LogLevel) {
+    const logPath = process.env.LOG_PATH || path.join(process.cwd(), 'logs');
+    if (!fs.existsSync(logPath)) {
+      fs.mkdirSync(logPath, { recursive: true });
+    }
+    this.logFile = logFile || path.join(logPath, 'mcp-server.log');
+    this.logLevel = logLevel || (process.env.LOG_LEVEL as LogLevel) || 'info';
   }
 
-  private shouldLog(level: LogLevel): boolean {
-    return this.levels[level] >= this.levels[this.logLevel];
-  }
+  private logMessage(level: LogLevel, message: string, data?: any) {
+    if (this.levels[level] < this.levels[this.logLevel]) {
+      return;
+    }
 
-  private formatMessage(level: LogLevel, message: string, data?: any): string {
     const timestamp = new Date().toISOString();
-    const dataStr = data ? '\n' + JSON.stringify(data, null, 2) : '';
-    return `[${timestamp}] [${level.toUpperCase()}] ${message}${dataStr}`;
+    const logData = data ? `\n${JSON.stringify(data, null, 2)}` : '';
+    const logEntry = `[${timestamp}] [${level.toUpperCase()}] ${message}${logData}`;
+
+    // Always log to console
+    console.log(logEntry);
+
+    // In stdio mode, we don't write to files to avoid mixing with transport messages
+    if (!this.isStdioMode()) {
+      this.writeToFile(logEntry);
+    }
   }
 
   debug(message: string, data?: any) {
-    if (!this.shouldLog('debug')) return;
-    
-    const formatted = this.formatMessage('debug', message, data);
-    if (!this.isStdioMode()) {
-      console.debug(formatted);
-    }
-    this.writeToFile(formatted);
+    this.logMessage('debug', message, data);
   }
 
   info(message: string, data?: any) {
-    if (!this.shouldLog('info')) return;
-    
-    const formatted = this.formatMessage('info', message, data);
-    if (!this.isStdioMode()) {
-      console.info(formatted);
-    }
-    this.writeToFile(formatted);
+    this.logMessage('info', message, data);
   }
 
   warn(message: string, data?: any) {
-    if (!this.shouldLog('warn')) return;
-    
-    const formatted = this.formatMessage('warn', message, data);
-    if (!this.isStdioMode()) {
-      console.warn(formatted);
-    }
-    this.writeToFile(formatted);
+    this.logMessage('warn', message, data);
   }
 
-  error(message: string, error?: any) {
-    if (!this.shouldLog('error')) return;
-    
-    const formatted = this.formatMessage('error', message, error);
-    if (!this.isStdioMode()) {
-      console.error(formatted);
-    }
-    this.writeToFile(formatted);
+  error(message: string, data?: any) {
+    this.logMessage('error', message, data);
   }
 
   // Legacy method for backward compatibility

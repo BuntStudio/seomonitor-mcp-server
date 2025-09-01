@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import { UserSession, ApiResponse } from '../types.js';
-import { logger } from '../logger.js';
+import { Logger } from '../logger.js';
 
 export interface SEOMonitorCampaign {
   campaign_id: number;
@@ -44,25 +44,28 @@ export interface SEOMonitorTrafficData {
 export class SEOMonitorClient {
   private client: AxiosInstance;
   private session: UserSession;
+  private logger: Logger;
 
-  constructor(session: UserSession) {
+  constructor(session: UserSession, logger: Logger) {
     this.session = session;
+    this.logger = logger;
     this.client = axios.create({
       baseURL: 'https://apigw.seomonitor.com/v3',
       headers: {
-        'Authorization': session.apiKey,
+        // SEOMonitor expects a Bearer token
+        'Authorization': `Bearer ${session.apiKey}`,
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
       timeout: 30000,
     });
     
-    logger.info(`SEOMonitor client initialized for user ${session.userId}`);
+    this.logger.info(`SEOMonitor client initialized for user ${session.userId}`);
 
     // Add request interceptor for logging
     this.client.interceptors.request.use(
       (config) => {
-        logger.debug('SEOMonitor API Request', {
+        this.logger.debug('SEOMonitor API Request', {
           user: session.userId,
           method: config.method?.toUpperCase(),
           url: (config.baseURL || '') + (config.url || ''),
@@ -71,7 +74,7 @@ export class SEOMonitorClient {
         return config;
       },
       (error) => {
-        logger.error('SEOMonitor API Request Error', error);
+        this.logger.error('SEOMonitor API Request Error', error);
         return Promise.reject(error);
       }
     );
@@ -79,7 +82,7 @@ export class SEOMonitorClient {
     // Add response interceptor for consistent error handling and logging
     this.client.interceptors.response.use(
       (response) => {
-        logger.debug('SEOMonitor API Response', {
+        this.logger.debug('SEOMonitor API Response', {
           user: session.userId,
           status: response.status,
           responseSize: JSON.stringify(response.data).length
@@ -87,7 +90,7 @@ export class SEOMonitorClient {
         return response;
       },
       (error) => {
-        logger.error('SEOMonitor API Error', {
+        this.logger.error('SEOMonitor API Error', {
           user: session.userId,
           status: error.response?.status,
           statusText: error.response?.statusText,
@@ -101,26 +104,14 @@ export class SEOMonitorClient {
 
   // Campaign Management
   async getCampaigns(): Promise<SEOMonitorCampaign[]> {
+    // Align with OpenAPI: /v3/dashboard/v3.0/campaigns/tracked (baseURL already includes /v3)
     const response = await this.client.get('/dashboard/v3.0/campaigns/tracked');
     return response.data;
   }
 
-  async getTrackedCampaigns(options?: {
-    campaign_ids?: string;
-    company_id?: number;
-    limit?: number;
-    offset?: number;
-  }): Promise<SEOMonitorCampaign[]> {
-    const params = new URLSearchParams();
-    
-    if (options?.campaign_ids) params.append('campaign_ids', options.campaign_ids);
-    if (options?.company_id) params.append('company_id', options.company_id.toString());
-    if (options?.limit) params.append('limit', options.limit.toString());
-    if (options?.offset) params.append('offset', options.offset.toString());
-
-    const url = params.toString() ? `/dashboard/v3.0/campaigns/tracked?${params}` : '/dashboard/v3.0/campaigns/tracked';
-    const response = await this.client.get(url);
-    
+  async getTrackedCampaigns(options: any = {}): Promise<SEOMonitorCampaign[]> {
+    this.logger.info(`Fetching tracked campaigns with options:`, options);
+    const response = await this.client.get('/dashboard/v3.0/campaigns/tracked', { params: options });
     return response.data;
   }
 
@@ -131,15 +122,19 @@ export class SEOMonitorClient {
     endDate?: string;
     limit?: number;
     offset?: number;
+    device?: string;
+    search?: string;
   }): Promise<SEOMonitorKeyword[]> {
     const params = new URLSearchParams();
     params.append('campaign_id', campaignId.toString());
-    
+
     if (options?.groupId) params.append('group_id', options.groupId.toString());
     if (options?.startDate) params.append('start_date', options.startDate);
     if (options?.endDate) params.append('end_date', options.endDate);
     if (options?.limit) params.append('limit', options.limit.toString());
     if (options?.offset) params.append('offset', options.offset.toString());
+    if (options?.device) params.append('device', options.device);
+    if (options?.search) params.append('search', options.search);
 
     const response = await this.client.get(`/rank-tracker/v3.0/keywords?${params}`);
     return response.data;
@@ -327,7 +322,8 @@ export class SEOMonitorClient {
     if (options?.endDate) params.append('end_date', options.endDate);
     if (options?.segmentId) params.append('segment_id', options.segmentId.toString());
 
-    const response = await this.client.get(`/organic-traffic/v3.0/traffic/daily?${params}`);
+    // Align with OpenAPI: /v3/organic-traffic/v3.0/daily-traffic (baseURL already includes /v3)
+    const response = await this.client.get(`/organic-traffic/v3.0/daily-traffic?${params}`);
     return response.data;
   }
 
@@ -390,7 +386,8 @@ export class SEOMonitorClient {
     if (options?.country) params.append('country', options.country);
     if (options?.language) params.append('language', options.language);
 
-    const response = await this.client.get(`/research/v3.0/domain/overview?${params}`);
+    // Align with OpenAPI: /v3/research/v3.0/domain-overview (baseURL already includes /v3)
+    const response = await this.client.get(`/research/v3.0/domain-overview?${params}`);
     return response.data;
   }
 
@@ -408,7 +405,8 @@ export class SEOMonitorClient {
     if (options?.limit) params.append('limit', options.limit.toString());
     if (options?.offset) params.append('offset', options.offset.toString());
 
-    const response = await this.client.get(`/research/v3.0/domain/ranking-keywords?${params}`);
+    // Align with OpenAPI: /v3/research/v3.0/domain-ranking-keywords (baseURL already includes /v3)
+    const response = await this.client.get(`/research/v3.0/domain-ranking-keywords?${params}`);
     return response.data;
   }
 
@@ -505,6 +503,9 @@ export class SEOMonitorClient {
 
   // Ranking Pages
   async getRankingPages(campaignId: number, options?: {
+    startDate?: string;
+    endDate?: string;
+    keywordIds?: string;
     groupId?: string;
     limit?: number;
     offset?: number;
@@ -512,7 +513,10 @@ export class SEOMonitorClient {
   }): Promise<any[]> {
     const params = new URLSearchParams();
     params.append('campaign_id', campaignId.toString());
-    
+
+    if (options?.startDate) params.append('start_date', options.startDate);
+    if (options?.endDate) params.append('end_date', options.endDate);
+    if (options?.keywordIds) params.append('keyword_ids', options.keywordIds);
     if (options?.groupId) params.append('group_id', options.groupId);
     if (options?.limit) params.append('limit', options.limit.toString());
     if (options?.offset) params.append('offset', options.offset.toString());
@@ -561,6 +565,6 @@ export class SEOMonitorClient {
   updateSession(newSession: UserSession) {
     this.session = newSession;
     this.client.defaults.headers['Authorization'] = newSession.apiKey;
-    logger.info(`Updated SEOMonitor session for user ${newSession.userId}`);
+    this.logger.info(`Updated SEOMonitor session for user ${newSession.userId}`);
   }
 }
