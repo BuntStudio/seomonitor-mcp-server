@@ -4,12 +4,15 @@ A Model Context Protocol (MCP) server that provides access to SEOMonitor's API f
 
 ## Installation & Usage
 
-This is a private MCP server designed for local development and Claude Desktop integration.
+### Via npx (Recommended)
+```bash
+npx github:BuntStudio/seomonitor-mcp-server
+```
 
-### Local Setup
+### Local Development Setup
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/BuntStudio/seomonitor-mcp-server.git
 cd seomonitor-mcp-server
 
 # Install dependencies
@@ -105,23 +108,22 @@ MIT
 
 ## Quick Start
 
-### Installation
+### Option 1: Direct Usage (Recommended)
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd seomonitor-mcp-server
-
-# Install dependencies
-npm install
-
-# Build the project
-npm run build
+# Run directly from GitHub
+npx github:BuntStudio/seomonitor-mcp-server
 ```
 
-### Basic Usage
+### Option 2: Local Development
 
 ```bash
+# Clone and setup
+git clone https://github.com/BuntStudio/seomonitor-mcp-server.git
+cd seomonitor-mcp-server
+npm install
+npm run build
+
 # Start STDIO server (for Claude Desktop)
 npm start
 
@@ -179,6 +181,22 @@ npm run dev
 **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
 **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
 
+#### Option A: Run via npx (Recommended)
+```json
+{
+  "mcpServers": {
+    "seomonitor": {
+      "command": "npx",
+      "args": ["github:BuntStudio/seomonitor-mcp-server"],
+      "env": {
+        "SEOMONITOR_API_KEY": "your-seomonitor-api-key-here"
+      }
+    }
+  }
+}
+```
+
+#### Option B: Run from local clone
 ```json
 {
   "mcpServers": {
@@ -193,7 +211,7 @@ npm run dev
 }
 ```
 
-**Note**: Use the absolute path to your `dist/index.js` file. The server runs in STDIO mode by default.
+**Note**: Option A runs directly from GitHub and automatically handles updates. Option B requires local setup but offers more control.
 
 ### Step 2: Restart Claude Desktop
 
@@ -420,7 +438,7 @@ npm start
 
 ## Contributing
 
-1. Fork the repository
+1. Fork the repository at https://github.com/BuntStudio/seomonitor-mcp-server
 2. Create a feature branch (`git checkout -b feature/new-tool`)
 3. Follow existing code patterns and OpenAPI compliance
 4. Add tests for new functionality
@@ -432,7 +450,7 @@ MIT License - see LICENSE file for details
 
 ## Support
 
-- **GitHub Issues**: [Report issues and feature requests](https://github.com/seomonitor/mcp-server/issues)
+- **GitHub Issues**: [Report issues and feature requests](https://github.com/BuntStudio/seomonitor-mcp-server/issues)
 - **SEOMonitor API Docs**: [Official API documentation](https://docs.seomonitor.com)
 - **MCP Protocol**: [Model Context Protocol specification](https://modelcontextprotocol.io)
 

@@ -43,10 +43,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/seomonitor/mcp-server.git"
+    "url": "https://github.com/BuntStudio/seomonitor-mcp-server.git"
   },
   "bugs": {
-    "url": "https://github.com/seomonitor/mcp-server/issues"
+    "url": "https://github.com/BuntStudio/seomonitor-mcp-server/issues"
   },
-  "homepage": "https://github.com/seomonitor/mcp-server#readme"
+  "homepage": "https://github.com/BuntStudio/seomonitor-mcp-server#readme"
 }
