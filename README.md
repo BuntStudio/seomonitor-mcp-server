@@ -26,6 +26,7 @@ npm run build
 
 ### Environment Variables
 - `SEOMONITOR_API_KEY` (required): Your SEOMonitor API key
+- `SEOMONITOR_HTTP_TIMEOUT_MS` (optional): HTTP timeout in milliseconds for SEOMonitor API requests made by tools. Defaults to 180000 (180s), ensuring tool calls can run over 120s.
 
 ### Claude Desktop Configuration
 
@@ -240,6 +241,10 @@ Create a `.env` file:
 ```env
 # SEOMonitor API Configuration
 SEOMONITOR_API_KEY=your-api-key-here
+
+# Optional: increase/decrease HTTP timeout (default 180000ms)
+# Must be >120000 to allow long-running tool calls
+# SEOMONITOR_HTTP_TIMEOUT_MS=180000
 
 # Logging
 LOG_LEVEL=info

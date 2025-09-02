@@ -50,6 +50,15 @@ export class SEOMonitorClient {
     this.session = session;
     this.logger = logger;
     
+    // Resolve HTTP timeout (default to 180s, must be >120s for long-running tools)
+    const defaultTimeoutMs = 180_000; // 180 seconds
+    const envTimeout = process.env.SEOMONITOR_HTTP_TIMEOUT_MS;
+    const resolvedTimeout = (() => {
+      const parsed = envTimeout ? parseInt(envTimeout, 10) : NaN;
+      if (!Number.isNaN(parsed) && parsed > 0) return parsed;
+      return defaultTimeoutMs;
+    })();
+
     this.client = axios.create({
       baseURL: 'https://apigw.seomonitor.com/v3',
       headers: {
@@ -58,10 +67,10 @@ export class SEOMonitorClient {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      timeout: 30000,
+      timeout: resolvedTimeout,
     });
     
-    this.logger.info('SEOMonitor client initialized');
+    this.logger.info('SEOMonitor client initialized', { httpTimeoutMs: resolvedTimeout });
 
     // Add request interceptor for logging
     this.client.interceptors.request.use(
