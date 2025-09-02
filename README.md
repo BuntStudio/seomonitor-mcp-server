@@ -4,15 +4,19 @@ A Model Context Protocol (MCP) server that provides access to SEOMonitor's API f
 
 ## Installation & Usage
 
-### Via NPX (Recommended)
-```bash
-npx seomonitor-mcp-server
-```
+This is a private MCP server designed for local development and Claude Desktop integration.
 
-### Via npm Global Install
+### Local Setup
 ```bash
-npm install -g seomonitor-mcp-server
-seomonitor-mcp
+# Clone the repository
+git clone <repository-url>
+cd seomonitor-mcp-server
+
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
 ```
 
 ## Configuration
@@ -40,14 +44,17 @@ Add this to your Claude Desktop `claude_desktop_config.json`:
 
 ### Available Tools
 
-The server provides access to SEOMonitor's API endpoints as MCP tools:
+The server provides 27 comprehensive SEO tools organized into categories:
 
-- Campaign management
-- Keyword tracking  
-- Traffic analytics
-- Research tools
-- Forecasting
-- And more...
+- **1 Campaign tool** - get_tracked_campaigns
+- **4 Rank tracking tools** - keyword data, daily ranks, groups, group metrics
+- **8 Advanced rank tracking tools** - competition analysis, SERP features, AI overview data
+- **2 Traffic analytics tools** - daily traffic data and keyword-specific metrics
+- **6 Research tools** - related keywords, topic analysis, domain insights
+- **4 Forecasting tools** - scenarios, objectives, keyword forecasts
+- **2 Keyword Vault tools** - vault tracking and overview
+
+All tools are automatically discovered and loaded at runtime.
 
 ## CLI Options
 
@@ -59,6 +66,8 @@ Options:
 - `--log-level <level>`: Set log level (debug, info, warn, error)
 - `--help`: Show help message
 
+The server runs in STDIO mode by default for Claude Desktop integration.
+
 ## Requirements
 
 - Node.js 18+
@@ -67,35 +76,32 @@ Options:
 ## Development
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd seomonitor-mcp-server
-
 # Install dependencies
 npm install
 
-# Build
+# Build TypeScript
 npm run build
 
-# Run in development
+# Run in development with auto-reload
 npm run dev
+
+# Start built version
+npm start
 ```
 
 ## License
 
 MIT
 
-A Model Context Protocol (MCP) server that provides access to SEOMonitor's comprehensive SEO API suite. This server enables AI applications like Claude Desktop to integrate real-time SEO data and insights directly into conversations.
-
 ## Features
 
-- 🔌 **Multiple Transport Options**: STDIO, HTTP REST API, WebSocket
-- 🛠️ **27 SEO Tools**: Complete coverage of SEOMonitor's core API endpoints
-- 🔐 **Secure Authentication**: API key-based authentication system
-- 🐳 **Docker Ready**: Full containerization with production-ready setup
+- 🛠️ **27 Dynamic SEO Tools**: Complete coverage of SEOMonitor's core API endpoints
+- 🔐 **API Key Authentication**: Secure access to SEOMonitor data
 - 📊 **Real-time SEO Data**: Live rankings, traffic, and competitive intelligence
-- 🚀 **Claude Desktop Integration**: Direct integration with Claude Desktop app
+- 🚀 **Claude Desktop Integration**: STDIO transport for seamless AI integration
+- 🔍 **Dynamic Tool Discovery**: Tools are automatically loaded and registered at runtime
 - 🎯 **OpenAPI Compliant**: All tools match SEOMonitor API v3.0 specification
+- 🏗️ **TypeScript**: Full type safety and modern development experience
 
 ## Quick Start
 
@@ -119,11 +125,8 @@ npm run build
 # Start STDIO server (for Claude Desktop)
 npm start
 
-# Start HTTP server
-npm start -- --transport http --port 3001
-
-# Start WebSocket server
-npm start -- --transport websocket --port 3001
+# Development mode with auto-reload
+npm run dev
 ```
 
 ## Available SEO Tools (27 Total)
@@ -190,6 +193,8 @@ npm start -- --transport websocket --port 3001
 }
 ```
 
+**Note**: Use the absolute path to your `dist/index.js` file. The server runs in STDIO mode by default.
+
 ### Step 2: Restart Claude Desktop
 
 After updating the configuration, restart Claude Desktop to load the SEOMonitor tools.
@@ -217,24 +222,9 @@ Create a `.env` file:
 ```env
 # SEOMonitor API Configuration
 SEOMONITOR_API_KEY=your-api-key-here
-SEOMONITOR_BASE_URL=https://apigw.seomonitor.com
-
-# Server Configuration  
-PORT=3001
-HOST=localhost
-TRANSPORT=stdio
-NODE_ENV=development
-
-# Authentication (for HTTP/WebSocket modes)
-API_KEY=your-server-api-key
-ENABLE_AUTH=false
 
 # Logging
 LOG_LEVEL=info
-LOG_FILE=mcp-server.log
-
-# CORS (for HTTP/WebSocket)
-CORS_ORIGIN=*
 ```
 
 ### Command Line Options
@@ -243,106 +233,11 @@ CORS_ORIGIN=*
 seomonitor-mcp [options]
 
 Options:
-  -t, --transport <type>     Transport: stdio, http, websocket (default: stdio)
-  -p, --port <number>        Port for HTTP/WebSocket (default: 3001)
-  -h, --host <host>          Host address (default: localhost)
-  --api-key <key>            Server API key for authentication
-  --enable-auth              Enable API key authentication
   --log-level <level>        Log level: debug, info, warn, error
   --help                     Show help message
 ```
 
-## HTTP REST API Usage
 
-When running in HTTP mode (`--transport http`):
-
-### List Available Tools
-```bash
-curl http://localhost:3001/api/mcp/tools
-```
-
-### Execute a Tool
-```bash
-curl -X POST http://localhost:3001/api/mcp/tools/get_tracked_campaigns \
-  -H "Content-Type: application/json" \
-  -d '{"limit": 10, "offset": 0}'
-```
-
-### Example: Get Keyword Data
-```bash
-curl -X POST http://localhost:3001/api/mcp/tools/get_keyword_data \
-  -H "Content-Type: application/json" \
-  -d '{
-    "campaign_id": 12345,
-    "start_date": "2024-01-01", 
-    "end_date": "2024-01-31",
-    "limit": 100
-  }'
-```
-
-## Running with Docker
-
-This project is fully containerized and can be run using Docker and Docker Compose.
-
-### Local Development Setup
-
-Follow these steps to run the MCP server locally for development.
-
-**1. Create Environment File**
-
-The Docker Compose setup requires a `.env` file for configuration. You can create one by copying the example file:
-
-```bash
-cp .env.example .env
-```
-
-**2. Configure API Key**
-
-Open the newly created `.env` file and add your SEOMonitor API key:
-
-```env
-SEOMONITOR_API_KEY=your-seomonitor-api-key-here
-```
-
-**3. Build and Run the Container**
-
-Use Docker Compose to build the image and start the server in detached mode:
-
-```bash
-docker-compose -f docker/docker-compose.yml up --build -d
-```
-
-The server will be available on `http://localhost:3001`.
-
-**4. Verify the Server**
-
-You can check if the server is running by accessing the health check endpoint:
-
-```bash
-curl http://localhost:3001/health
-```
-
-**5. Stop the Server**
-
-To stop the container, run:
-
-```bash
-docker-compose -f docker/docker-compose.yml down
-```
-
-### Production Deployment
-
-For production, use the `docker-compose.prod.yml` file, which is optimized for performance and scalability.
-
-```bash
-# Ensure your .env file is configured for production
-
-# Start the services
-docker-compose -f docker/docker-compose.prod.yml up -d
-
-# Scale the service (optional)
-docker-compose -f docker/docker-compose.prod.yml up -d --scale seomonitor-mcp=3
-```
 
 ## Development
 
@@ -351,30 +246,25 @@ docker-compose -f docker/docker-compose.prod.yml up -d --scale seomonitor-mcp=3
 ```
 seomonitor-mcp-server/
 ├── src/
-│   ├── index.ts              # Main entry point
+│   ├── index.ts              # Main entry point with CLI
 │   ├── server.ts             # Core MCP server implementation
 │   ├── types.ts              # TypeScript type definitions
 │   ├── logger.ts             # Structured logging utilities
-│   ├── transports/           # Transport layer implementations
-│   │   ├── stdio.ts          # STDIO transport (Claude Desktop)
-│   │   ├── http.ts           # HTTP REST API server
-│   │   └── websocket.ts      # WebSocket server
-│   ├── clients/              # External API clients
-│   │   ├── api-client.ts     # Generic HTTP client
+│   ├── transports/
+│   │   └── stdio.ts          # STDIO transport for Claude Desktop
+│   ├── clients/
 │   │   └── seomonitor-client.ts # SEOMonitor API client
-│   ├── auth/                 # Authentication utilities
 │   └── mcp-tools/            # MCP tool implementations
-│       ├── index.ts          # Dynamic tool discovery
+│       ├── index.ts          # Dynamic tool discovery & loading
 │       ├── campaign-tools.ts         # Campaign management (1 tool)
 │       ├── rank-tracking-tools.ts    # Basic rank tracking (4 tools)
 │       ├── rank-advanced-tools.ts    # Advanced ranking (8 tools)
 │       ├── traffic-tools.ts          # Traffic analytics (2 tools)
 │       ├── research-tools.ts         # Keyword research (6 tools)
 │       ├── forecast-tools.ts         # Forecasting (4 tools)
-│       └── vault-tools.ts            # Content vault (2 tools)
+│       └── vault-tools.ts            # Keyword Vault (2 tools)
 ├── bin/
 │   └── mcp-server.js         # CLI executable wrapper
-├── docker/                   # Docker configuration
 └── dist/                     # Compiled TypeScript output
 ```
 
@@ -387,14 +277,8 @@ npm run dev
 # Build TypeScript
 npm run build
 
-# Run with specific transport
-npm run start:stdio
-npm run start:http  
-npm run start:ws
-
-# Docker development
-npm run docker:build
-npm run docker:run
+# Start built version
+npm start
 ```
 
 ### Adding New Tools
@@ -434,7 +318,7 @@ static async executeYourTool(args: any, seoClient: SEOMonitorClient) {
 }
 ```
 
-3. **Add to definitions and execute methods** - tools are automatically discovered!
+3. **Add to class** - tools are automatically discovered at runtime!
 
 ## API Integration Examples
 
@@ -506,10 +390,9 @@ const domainOverview = await mcp.callTool('get_domain_overview', {
 2. **Authentication errors**:
    - Verify SEOMonitor API key is valid
    - Check API key has proper permissions
-   - Ensure base URL is correct
 
 3. **Tool execution errors**:
-   - Enable debug logging: `LOG_LEVEL=debug`
+   - Enable debug logging: `--log-level debug`
    - Check parameter types match tool requirements
    - Verify campaign IDs exist and are accessible
 
@@ -517,29 +400,23 @@ const domainOverview = await mcp.callTool('get_domain_overview', {
 
 ```bash
 # Enable detailed logging
+npm start -- --log-level debug
+
+# Or set environment variable
 export LOG_LEVEL=debug
 npm start
-
-# Check tool loading
-npm start -- --transport stdio --log-level debug
-
-# Test HTTP endpoints
-curl -v http://localhost:3001/api/mcp/tools
 ```
 
 ## Performance Considerations
 
 - **Rate Limiting**: SEOMonitor API has rate limits - implement appropriate delays
-- **Caching**: Consider caching frequently requested data
 - **Pagination**: Use limit/offset parameters for large datasets
 - **Date Ranges**: Smaller date ranges improve response times
 
 ## Security
 
 - **API Keys**: Store in environment variables, never in code
-- **HTTPS**: Use HTTPS in production deployments
-- **CORS**: Configure appropriate CORS origins for web clients
-- **Authentication**: Enable API key auth for HTTP/WebSocket transports
+- **Private Package**: This package is marked as private and not published to npm
 
 ## Contributing
 
