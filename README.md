@@ -199,6 +199,6 @@ npm start -- --log-level debug
 ---
 ## 📚 Resources
 
-- [SEOMonitor API Docs](https://docs.seomonitor.com)  
+- [SEOMonitor API Docs](https://api-docs.seomonitor.com)  
 - [MCP Specification](https://modelcontextprotocol.io)  
 - [GitHub Issues](https://github.com/BuntStudio/seomonitor-mcp-server/issues)
