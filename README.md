@@ -9,19 +9,6 @@ A Model Context Protocol (MCP) server that provides access to SEOMonitor's API f
 npx github:BuntStudio/seomonitor-mcp-server
 ```
 
-### Local Development Setup
-```bash
-# Clone the repository
-git clone https://github.com/BuntStudio/seomonitor-mcp-server.git
-cd seomonitor-mcp-server
-
-# Install dependencies
-npm install
-
-# Build the project
-npm run build
-```
-
 ## Configuration
 
 ### Environment Variables
