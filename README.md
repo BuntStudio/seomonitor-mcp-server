@@ -202,9 +202,3 @@ npm start -- --log-level debug
 - [SEOMonitor API Docs](https://docs.seomonitor.com)  
 - [MCP Specification](https://modelcontextprotocol.io)  
 - [GitHub Issues](https://github.com/BuntStudio/seomonitor-mcp-server/issues)
-
----
-
-## 📄 License
-
-MIT © BuntStudio
