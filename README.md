@@ -28,24 +28,6 @@ npm run build
 - `SEOMONITOR_API_KEY` (required): Your SEOMonitor API key
 - `SEOMONITOR_HTTP_TIMEOUT_MS` (optional): HTTP timeout in milliseconds for SEOMonitor API requests made by tools. Defaults to 180000 (180s), ensuring tool calls can run over 120s.
 
-### Claude Desktop Configuration
-
-Add this to your Claude Desktop `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "seomonitor": {
-      "command": "npx",
-      "args": ["seomonitor-mcp-server"],
-      "env": {
-        "SEOMONITOR_API_KEY": "your-api-key-here"
-      }
-    }
-  }
-}
-```
-
 ### Available Tools
 
 The server provides 27 comprehensive SEO tools organized into categories:
