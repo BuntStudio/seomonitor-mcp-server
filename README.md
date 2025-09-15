@@ -197,14 +197,6 @@ npm start -- --log-level debug
 ```
 
 ---
-
-## 🛡️ Security
-
-- Store API keys in environment variables, never in code.
-- Package is private, not published to npm.
-
----
-
 ## 📚 Resources
 
 - [SEOMonitor API Docs](https://docs.seomonitor.com)  
