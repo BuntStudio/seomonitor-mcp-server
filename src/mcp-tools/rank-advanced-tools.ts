@@ -10,7 +10,7 @@ export class RankAdvancedTools {
    */
   static getKeywordsCompetitionDefinition() {
     return {
-      name: 'get_keywords_competition',
+      name: 'seomonitor_get_keywords_competition',
       description: 'Competitor analysis for keywords',
       inputSchema: {
         type: 'object',
@@ -62,7 +62,7 @@ export class RankAdvancedTools {
    */
   static getSerpFeaturePresenceDefinition() {
     return {
-      name: 'get_serp_feature_presence',
+      name: 'seomonitor_get_serp_feature_presence',
       description: 'SERP feature tracking over time',
       inputSchema: {
         type: 'object',
@@ -106,7 +106,7 @@ export class RankAdvancedTools {
    */
   static getTopResultsDefinition() {
     return {
-      name: 'get_top_results',
+      name: 'seomonitor_get_top_results',
       description: 'Top 100 SERP results for keywords',
       inputSchema: {
         type: 'object',
@@ -150,7 +150,7 @@ export class RankAdvancedTools {
    */
   static getKeywordAiOverviewDefinition() {
     return {
-      name: 'get_keyword_ai_overview',
+      name: 'seomonitor_get_keyword_ai_overview',
       description: 'AI Overview presence data for keywords',
       inputSchema: {
         type: 'object',
@@ -194,7 +194,7 @@ export class RankAdvancedTools {
    */
   static getRankingPagesDefinition() {
     return {
-      name: 'get_ranking_pages',
+      name: 'seomonitor_get_ranking_pages',
       description: 'Pages ranking for specific keywords',
       inputSchema: {
         type: 'object',
@@ -238,7 +238,7 @@ export class RankAdvancedTools {
    */
   static getDailyGroupVisibilityDefinition() {
     return {
-      name: 'get_daily_group_visibility',
+      name: 'seomonitor_get_daily_group_visibility',
       description: 'Daily visibility metrics for keyword groups',
       inputSchema: {
         type: 'object',
@@ -282,7 +282,7 @@ export class RankAdvancedTools {
    */
   static getAddKeywordsDefinition() {
     return {
-      name: 'add_keywords',
+      name: 'seomonitor_add_keywords',
       description: 'Add new keywords to campaign',
       inputSchema: {
         type: 'object',
@@ -310,7 +310,7 @@ export class RankAdvancedTools {
    */
   static getKeywordImportStatusDefinition() {
     return {
-      name: 'get_keyword_import_status',
+      name: 'seomonitor_get_keyword_import_status',
       description: 'Check status of keyword import task',
       inputSchema: {
         type: 'object',
@@ -542,21 +542,21 @@ export class RankAdvancedTools {
    */
   static async execute(toolName: string, args: any, seoClient: SEOMonitorClient) {
     switch (toolName) {
-      case 'get_keywords_competition':
+      case 'seomonitor_get_keywords_competition':
         return this.executeGetKeywordsCompetition(args, seoClient);
-      case 'get_top_results':
+      case 'seomonitor_get_top_results':
         return this.executeGetTopResults(args, seoClient);
-      case 'get_keyword_ai_overview':
+      case 'seomonitor_get_keyword_ai_overview':
         return this.executeGetKeywordAiOverview(args, seoClient);
-      case 'get_daily_group_visibility':
+      case 'seomonitor_get_daily_group_visibility':
         return this.executeGetDailyGroupVisibility(args, seoClient);
-      case 'add_keywords':
+      case 'seomonitor_add_keywords':
         return this.executeAddKeywords(args, seoClient);
-      case 'get_keyword_import_status':
+      case 'seomonitor_get_keyword_import_status':
         return this.executeGetKeywordImportStatus(args, seoClient);
-      case 'get_serp_feature_presence':
+      case 'seomonitor_get_serp_feature_presence':
         return this.executeGetSerpFeaturePresence(args, seoClient);
-      case 'get_ranking_pages':
+      case 'seomonitor_get_ranking_pages':
         return this.executeGetRankingPages(args, seoClient);
       default:
         throw new Error(`Unknown advanced rank tracking tool: ${toolName}`);

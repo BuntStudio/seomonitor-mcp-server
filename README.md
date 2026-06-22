@@ -48,15 +48,20 @@ Add this to your Claude Desktop `claude_desktop_config.json`:
 
 ### Available Tools
 
-The server provides 27 comprehensive SEO tools organized into categories:
+The server provides 45 comprehensive SEO tools organized into categories. Every tool name is prefixed with `seomonitor_` to avoid collisions with tools exposed by other MCP servers:
 
-- **1 Campaign tool** - get_tracked_campaigns
+- **1 Campaign tool** - tracked campaigns
 - **4 Rank tracking tools** - keyword data, daily ranks, groups, group metrics
-- **8 Advanced rank tracking tools** - competition analysis, SERP features, AI overview data
+- **8 Advanced rank tracking tools** - competition analysis, SERP features, AI overview presence
+- **4 AI Overview (AIO) tools** - daily ranks, competition, group mentions/citations visibility
+- **5 AI Search (AIS) tools** - keyword data, daily ranks, competition, group mentions/citations visibility
+- **3 Visibility tools** - share of voice, daily share of clicks, SERP visibility
+- **4 AI Writer tools** - article content, generate outlines/articles, generation status, topic recommendations
 - **2 Traffic analytics tools** - daily traffic data and keyword-specific metrics
 - **6 Research tools** - related keywords, topic analysis, domain insights
 - **4 Forecasting tools** - scenarios, objectives, keyword forecasts
-- **2 Keyword Vault tools** - vault tracking and overview
+- **3 Keyword Vault tools** - vault data, overview, lists
+- **1 Dashboard tool** - list companies (accounts)
 
 All tools are automatically discovered and loaded at runtime.
 
