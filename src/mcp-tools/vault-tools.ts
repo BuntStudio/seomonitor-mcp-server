@@ -10,7 +10,7 @@ export class VaultTools {
    */
   static getKeywordVaultDataDefinition() {
     return {
-      name: 'get_keyword_vault_data',
+      name: 'seomonitor_get_keyword_vault_data',
       description: 'Access saved keyword lists data from Keyword Vault',
       inputSchema: {
         type: 'object',
@@ -62,7 +62,7 @@ export class VaultTools {
    */
   static getKeywordVaultOverviewDefinition() {
     return {
-      name: 'get_keyword_vault_overview',
+      name: 'seomonitor_get_keyword_vault_overview',
       description: 'Overview aggregated metrics for Keyword Vault list',
       inputSchema: {
         type: 'object',
@@ -82,12 +82,41 @@ export class VaultTools {
   }
 
   /**
+   * Get vault lists tool definition
+   */
+  static getVaultListsDefinition() {
+    return {
+      name: 'seomonitor_get_vault_lists',
+      description: 'List the Keyword Vault lists available for a campaign',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          campaign_id: {
+            type: 'integer',
+            description: 'Required campaign ID',
+          },
+          limit: {
+            type: 'integer',
+            description: 'Optional: Results limit',
+          },
+          offset: {
+            type: 'string',
+            description: 'Optional: Pagination offset',
+          },
+        },
+        required: ['campaign_id'],
+      },
+    };
+  }
+
+  /**
    * Get all tool definitions for this category
    */
   static getAllDefinitions() {
     return [
       this.getKeywordVaultDataDefinition(),
       this.getKeywordVaultOverviewDefinition(),
+      this.getVaultListsDefinition(),
     ];
   }
 
@@ -136,14 +165,37 @@ export class VaultTools {
   }
 
   /**
+   * Execute get_vault_lists tool
+   */
+  static async executeGetVaultLists(args: any, seoClient: SEOMonitorClient) {
+    const { campaign_id, limit, offset } = args;
+
+    const result = await seoClient.getVaultLists(campaign_id, {
+      limit,
+      offset,
+    });
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
+    };
+  }
+
+  /**
    * Execute tool based on name
    */
   static async execute(toolName: string, args: any, seoClient: SEOMonitorClient) {
     switch (toolName) {
-      case 'get_keyword_vault_data':
+      case 'seomonitor_get_keyword_vault_data':
         return this.executeGetKeywordVaultData(args, seoClient);
-      case 'get_keyword_vault_overview':
+      case 'seomonitor_get_keyword_vault_overview':
         return this.executeGetKeywordVaultOverview(args, seoClient);
+      case 'seomonitor_get_vault_lists':
+        return this.executeGetVaultLists(args, seoClient);
       default:
         throw new Error(`Unknown vault tool: ${toolName}`);
     }

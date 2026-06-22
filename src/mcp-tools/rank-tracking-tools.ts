@@ -10,7 +10,7 @@ export class RankTrackingTools {
    */
   static getKeywordDataDefinition() {
     return {
-      name: 'get_keyword_data',
+      name: 'seomonitor_get_keyword_data',
       description: 'Get keyword metrics and rankings from SEOMonitor',
       inputSchema: {
         type: 'object',
@@ -74,7 +74,7 @@ export class RankTrackingTools {
    */
   static getDailyKeywordRanksDefinition() {
     return {
-      name: 'get_daily_keyword_ranks',
+      name: 'seomonitor_get_daily_keyword_ranks',
       description: 'Historical ranking data for keywords',
       inputSchema: {
         type: 'object',
@@ -134,7 +134,7 @@ export class RankTrackingTools {
    */
   static getKeywordGroupsDefinition() {
     return {
-      name: 'get_keyword_groups',
+      name: 'seomonitor_get_keyword_groups',
       description: 'Retrieve keyword groups organization',
       inputSchema: {
         type: 'object',
@@ -154,7 +154,7 @@ export class RankTrackingTools {
    */
   static getGroupDataDefinition() {
     return {
-      name: 'get_group_data',
+      name: 'seomonitor_get_group_data',
       description: 'Group-level performance metrics',
       inputSchema: {
         type: 'object',
@@ -287,13 +287,13 @@ export class RankTrackingTools {
    */
   static async execute(toolName: string, args: any, seoClient: SEOMonitorClient) {
     switch (toolName) {
-      case 'get_keyword_data':
+      case 'seomonitor_get_keyword_data':
         return this.executeGetKeywordData(args, seoClient);
-      case 'get_daily_keyword_ranks':
+      case 'seomonitor_get_daily_keyword_ranks':
         return this.executeGetDailyKeywordRanks(args, seoClient);
-      case 'get_keyword_groups':
+      case 'seomonitor_get_keyword_groups':
         return this.executeGetKeywordGroups(args, seoClient);
-      case 'get_group_data':
+      case 'seomonitor_get_group_data':
         return this.executeGetGroupData(args, seoClient);
       default:
         throw new Error(`Unknown rank tracking tool: ${toolName}`);

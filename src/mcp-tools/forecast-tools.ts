@@ -10,7 +10,7 @@ export class ForecastTools {
    */
   static getForecastScenariosDefinition() {
     return {
-      name: 'get_forecast_scenarios',
+      name: 'seomonitor_get_forecast_scenarios',
       description: 'List available forecast scenarios',
       inputSchema: {
         type: 'object',
@@ -30,7 +30,7 @@ export class ForecastTools {
    */
   static getForecastScenarioDataDefinition() {
     return {
-      name: 'get_forecast_scenario_data',
+      name: 'seomonitor_get_forecast_scenario_data',
       description: 'Detailed forecast for specific scenario',
       inputSchema: {
         type: 'object',
@@ -54,7 +54,7 @@ export class ForecastTools {
    */
   static getForecastObjectiveDataDefinition() {
     return {
-      name: 'get_forecast_objective_data',
+      name: 'seomonitor_get_forecast_objective_data',
       description: 'Objective-specific forecast data',
       inputSchema: {
         type: 'object',
@@ -78,7 +78,7 @@ export class ForecastTools {
    */
   static getForecastKeywordsDefinition() {
     return {
-      name: 'get_forecast_keywords',
+      name: 'seomonitor_get_forecast_keywords',
       description: 'Keyword-level forecasting',
       inputSchema: {
         type: 'object',
@@ -197,13 +197,13 @@ export class ForecastTools {
 
   static async execute(toolName: string, args: any, seoClient: SEOMonitorClient) {
     switch (toolName) {
-      case 'get_forecast_scenarios':
+      case 'seomonitor_get_forecast_scenarios':
         return this.executeGetForecastScenarios(args, seoClient);
-      case 'get_forecast_scenario_data':
+      case 'seomonitor_get_forecast_scenario_data':
         return this.executeGetForecastScenarioData(args, seoClient);
-      case 'get_forecast_objective_data':
+      case 'seomonitor_get_forecast_objective_data':
         return this.executeGetForecastObjectiveData(args, seoClient);
-      case 'get_forecast_keywords':
+      case 'seomonitor_get_forecast_keywords':
         return this.executeGetForecastKeywords(args, seoClient);
       default:
         throw new Error(`Unknown forecast tool: ${toolName}`);

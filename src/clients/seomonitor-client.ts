@@ -571,6 +571,405 @@ export class SEOMonitorClient {
   }
 
 
+  // ===========================================================================
+  // AI Overview (AIO) - extended rank-tracker endpoints
+  // ===========================================================================
+
+  // Get Daily Keyword Ranks AI Overview
+  async getKeywordRanksAiOverview(campaignId: number, options: {
+    startDate: string;
+    endDate: string;
+    groupId?: number;
+    keywordIds?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId.toString());
+    params.append('start_date', options.startDate);
+    params.append('end_date', options.endDate);
+
+    if (options.groupId) params.append('group_id', options.groupId.toString());
+    if (options.keywordIds) params.append('keyword_ids', options.keywordIds);
+    if (options.limit) params.append('limit', options.limit.toString());
+    if (options.offset) params.append('offset', options.offset.toString());
+
+    const response = await this.client.get(`/rank-tracker/v3.0/keywords/daily-ranks/aio?${params}`);
+    return response.data;
+  }
+
+  // Get Keywords Competition Data AI Overview
+  async getCompetitionAiOverview(campaignId: number, options: {
+    device: string;
+    startDate: string;
+    endDate: string;
+    groupId?: number;
+    keywordIds?: string;
+    competitors?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId.toString());
+    params.append('device', options.device);
+    params.append('start_date', options.startDate);
+    params.append('end_date', options.endDate);
+
+    if (options.groupId) params.append('group_id', options.groupId.toString());
+    if (options.keywordIds) params.append('keyword_ids', options.keywordIds);
+    if (options.competitors) params.append('competitors', options.competitors);
+    if (options.limit) params.append('limit', options.limit.toString());
+    if (options.offset) params.append('offset', options.offset.toString());
+
+    const response = await this.client.get(`/rank-tracker/v3.0/keywords/competition/aio?${params}`);
+    return response.data;
+  }
+
+  // Get Daily Group Visibility AI Overview Mentions
+  async getDailyGroupVisibilityAioMentions(campaignId: number, options: {
+    startDate: string;
+    endDate: string;
+    groupId?: number;
+    keywordIds?: string;
+    domain?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId.toString());
+    params.append('start_date', options.startDate);
+    params.append('end_date', options.endDate);
+
+    if (options.groupId) params.append('group_id', options.groupId.toString());
+    if (options.keywordIds) params.append('keyword_ids', options.keywordIds);
+    if (options.domain) params.append('domain', options.domain);
+    if (options.limit) params.append('limit', options.limit.toString());
+    if (options.offset) params.append('offset', options.offset.toString());
+
+    const response = await this.client.get(`/rank-tracker/v3.0/groups/daily-visibility/aio-mentions?${params}`);
+    return response.data;
+  }
+
+  // Get Daily Group Visibility AI Overview Citations
+  async getDailyGroupVisibilityAioCitations(campaignId: number, options: {
+    startDate: string;
+    endDate: string;
+    groupId?: number;
+    keywordIds?: string;
+    domain?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId.toString());
+    params.append('start_date', options.startDate);
+    params.append('end_date', options.endDate);
+
+    if (options.groupId) params.append('group_id', options.groupId.toString());
+    if (options.keywordIds) params.append('keyword_ids', options.keywordIds);
+    if (options.domain) params.append('domain', options.domain);
+    if (options.limit) params.append('limit', options.limit.toString());
+    if (options.offset) params.append('offset', options.offset.toString());
+
+    const response = await this.client.get(`/rank-tracker/v3.0/groups/daily-visibility/aio-citations?${params}`);
+    return response.data;
+  }
+
+  // ===========================================================================
+  // AI Search (AIS) - rank-tracker endpoints
+  // ===========================================================================
+
+  // Get Keyword AI Search Data
+  async getKeywordAiSearch(campaignId: number, options: {
+    startDate: string;
+    endDate: string;
+    groupId?: string;
+    limit?: number;
+    offset?: number;
+    contentEncoding?: string;
+    skipHtml?: boolean;
+  }): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId.toString());
+    params.append('start_date', options.startDate);
+    params.append('end_date', options.endDate);
+
+    if (options.groupId) params.append('group_id', options.groupId);
+    if (options.limit) params.append('limit', options.limit.toString());
+    if (options.offset) params.append('offset', options.offset.toString());
+    if (options.contentEncoding) params.append('content_encoding', options.contentEncoding);
+    if (options.skipHtml !== undefined) params.append('skip_html', options.skipHtml.toString());
+
+    const response = await this.client.get(`/rank-tracker/v3.0/keywords/ais?${params}`);
+    return response.data;
+  }
+
+  // Get Keywords Competition AI Search Data
+  async getCompetitionAiSearch(campaignId: number, options: {
+    startDate: string;
+    endDate: string;
+    groupId?: number;
+    keywordIds?: string;
+    competitors?: string;
+    limit?: number;
+    offset?: number;
+    orderBy?: string;
+    orderDirection?: string;
+    search?: string;
+  }): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId.toString());
+    params.append('start_date', options.startDate);
+    params.append('end_date', options.endDate);
+
+    if (options.groupId) params.append('group_id', options.groupId.toString());
+    if (options.keywordIds) params.append('keyword_ids', options.keywordIds);
+    if (options.competitors) params.append('competitors', options.competitors);
+    if (options.limit) params.append('limit', options.limit.toString());
+    if (options.offset) params.append('offset', options.offset.toString());
+    if (options.orderBy) params.append('order_by', options.orderBy);
+    if (options.orderDirection) params.append('order_direction', options.orderDirection);
+    if (options.search) params.append('search', options.search);
+
+    const response = await this.client.get(`/rank-tracker/v3.0/keywords/competition/ais?${params}`);
+    return response.data;
+  }
+
+  // Get Daily AI Search Keyword Ranks
+  async getDailyAiSearchKeywordRanks(campaignId: number, options: {
+    startDate: string;
+    endDate: string;
+    domain?: string;
+    groupId?: string;
+    keywordIds?: string;
+    getArchive?: string;
+    limit?: number;
+    offset?: number;
+    search?: string;
+  }): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId.toString());
+    params.append('start_date', options.startDate);
+    params.append('end_date', options.endDate);
+
+    if (options.domain) params.append('domain', options.domain);
+    if (options.groupId) params.append('group_id', options.groupId);
+    if (options.keywordIds) params.append('keyword_ids', options.keywordIds);
+    if (options.getArchive) params.append('get_archive', options.getArchive);
+    if (options.limit) params.append('limit', options.limit.toString());
+    if (options.offset) params.append('offset', options.offset.toString());
+    if (options.search) params.append('search', options.search);
+
+    const response = await this.client.get(`/rank-tracker/v3.0/keywords/daily-ranks/ais?${params}`);
+    return response.data;
+  }
+
+  // Get Daily Group AI Search Brand Mentions visibility
+  async getDailyGroupAisMentions(campaignId: number, options: {
+    startDate: string;
+    endDate: string;
+    groupId?: number;
+    keywordIds?: string;
+    domain?: string;
+    metricsWeightedBySearchVolume?: number;
+  }): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId.toString());
+    params.append('start_date', options.startDate);
+    params.append('end_date', options.endDate);
+
+    if (options.groupId) params.append('group_id', options.groupId.toString());
+    if (options.keywordIds) params.append('keyword_ids', options.keywordIds);
+    if (options.domain) params.append('domain', options.domain);
+    if (options.metricsWeightedBySearchVolume !== undefined) {
+      params.append('metrics_weighted_by_search_volume', options.metricsWeightedBySearchVolume.toString());
+    }
+
+    const response = await this.client.get(`/rank-tracker/v3.0/groups/daily-visibility/ais-mentions?${params}`);
+    return response.data;
+  }
+
+  // Get Daily Group AI Search Site Citations visibility
+  async getDailyGroupAisCitations(campaignId: number, options: {
+    startDate: string;
+    endDate: string;
+    groupId?: number;
+    keywordIds?: string;
+    domain?: string;
+    metricsWeightedBySearchVolume?: number;
+  }): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId.toString());
+    params.append('start_date', options.startDate);
+    params.append('end_date', options.endDate);
+
+    if (options.groupId) params.append('group_id', options.groupId.toString());
+    if (options.keywordIds) params.append('keyword_ids', options.keywordIds);
+    if (options.domain) params.append('domain', options.domain);
+    if (options.metricsWeightedBySearchVolume !== undefined) {
+      params.append('metrics_weighted_by_search_volume', options.metricsWeightedBySearchVolume.toString());
+    }
+
+    const response = await this.client.get(`/rank-tracker/v3.0/groups/daily-visibility/ais-citations?${params}`);
+    return response.data;
+  }
+
+  // ===========================================================================
+  // Visibility metrics - rank-tracker endpoints
+  // ===========================================================================
+
+  // Get Daily Share of Clicks
+  async getDailyShareOfClicks(campaignId: number, options?: {
+    startDate?: string;
+    endDate?: string;
+    groupId?: number;
+    keywordIds?: string;
+    device?: string;
+  }): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId.toString());
+
+    if (options?.startDate) params.append('start_date', options.startDate);
+    if (options?.endDate) params.append('end_date', options.endDate);
+    if (options?.groupId) params.append('group_id', options.groupId.toString());
+    if (options?.keywordIds) params.append('keyword_ids', options.keywordIds);
+    if (options?.device) params.append('device', options.device);
+
+    const response = await this.client.get(`/rank-tracker/v3.0/daily-share-of-clicks?${params}`);
+    return response.data;
+  }
+
+  // Get Share of Voice
+  async getShareOfVoice(campaignId: number, options: {
+    date: string;
+    groupId?: number;
+    keywordIds?: string;
+    competitors?: string;
+    metricsWeightedBySearchVolume?: number;
+    device?: string;
+  }): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId.toString());
+    params.append('date', options.date);
+
+    if (options.groupId) params.append('group_id', options.groupId.toString());
+    if (options.keywordIds) params.append('keyword_ids', options.keywordIds);
+    if (options.competitors) params.append('competitors', options.competitors);
+    if (options.metricsWeightedBySearchVolume !== undefined) {
+      params.append('metrics_weighted_by_search_volume', options.metricsWeightedBySearchVolume.toString());
+    }
+    if (options.device) params.append('device', options.device);
+
+    const response = await this.client.get(`/rank-tracker/v3.0/share-of-voice?${params}`);
+    return response.data;
+  }
+
+  // Get SERP Visibility Data
+  async getSerpVisibility(campaignId: number, options: {
+    startDate: string;
+    endDate: string;
+    groupId?: string;
+  }): Promise<any> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId.toString());
+    params.append('start_date', options.startDate);
+    params.append('end_date', options.endDate);
+
+    if (options.groupId) params.append('group_id', options.groupId);
+
+    const response = await this.client.get(`/rank-tracker/v3.0/serp-visibility?${params}`);
+    return response.data;
+  }
+
+  // ===========================================================================
+  // Keyword Vault - lists
+  // ===========================================================================
+
+  // Get Lists
+  async getVaultLists(campaignId: number, options?: {
+    limit?: number;
+    offset?: string;
+  }): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId.toString());
+
+    if (options?.limit) params.append('limit', options.limit.toString());
+    if (options?.offset) params.append('offset', options.offset);
+
+    const response = await this.client.get(`/keyword-vault/v3.0/get-lists?${params}`);
+    return response.data;
+  }
+
+  // ===========================================================================
+  // AI Writer
+  // ===========================================================================
+
+  // Get Article Content
+  async getArticleContent(campaignId: string, options?: {
+    articleId?: string;
+  }): Promise<any> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId);
+
+    if (options?.articleId) params.append('article_id', options.articleId);
+
+    const response = await this.client.get(`/ai-writer/v3.0/article?${params}`);
+    return response.data;
+  }
+
+  // Generate Outlines and Articles
+  async generateArticles(campaignId: string, articles: any[]): Promise<any> {
+    const payload = {
+      campaign_id: campaignId,
+      articles,
+    };
+
+    const response = await this.client.post('/ai-writer/v3.0/generate', payload);
+    return response.data;
+  }
+
+  // Get Generation Status
+  async getGenerationStatus(requestId: string): Promise<any> {
+    const params = new URLSearchParams();
+    params.append('request_id', requestId);
+
+    const response = await this.client.get(`/ai-writer/v3.0/status?${params}`);
+    return response.data;
+  }
+
+  // Get Topic Recommendations
+  async getTopicRecommendations(campaignId: string, options?: {
+    onDemand?: boolean;
+    category?: string;
+    limit?: number;
+    metrics?: boolean;
+    sortBy?: string;
+    offset?: number;
+  }): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId);
+
+    if (options?.onDemand !== undefined) params.append('on_demand', options.onDemand.toString());
+    if (options?.category) params.append('category', options.category);
+    if (options?.limit) params.append('limit', options.limit.toString());
+    if (options?.metrics !== undefined) params.append('metrics', options.metrics.toString());
+    if (options?.sortBy) params.append('sort_by', options.sortBy);
+    if (options?.offset) params.append('offset', options.offset.toString());
+
+    const response = await this.client.get(`/ai-writer/v3.0/topic-recommendations?${params}`);
+    return response.data;
+  }
+
+  // ===========================================================================
+  // Dashboard
+  // ===========================================================================
+
+  // List Companies (Accounts)
+  async getCompanies(): Promise<any[]> {
+    const response = await this.client.get('/dashboard/v3.0/companies');
+    return response.data;
+  }
+
   // Update session (useful for refreshing API keys)
   updateSession(newSession: UserSession) {
     this.session = newSession;

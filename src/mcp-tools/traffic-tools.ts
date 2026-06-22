@@ -10,7 +10,7 @@ export class TrafficTools {
    */
   static getDailyTrafficDefinition() {
     return {
-      name: 'get_daily_traffic_data',
+      name: 'seomonitor_get_daily_traffic_data',
       description: 'Traffic metrics segmented by various dimensions',
       inputSchema: {
         type: 'object',
@@ -46,7 +46,7 @@ export class TrafficTools {
    */
   static getTrafficByKeywordsDefinition() {
     return {
-      name: 'get_traffic_by_keywords',
+      name: 'seomonitor_get_traffic_by_keywords',
       description: 'Keyword-level traffic attribution',
       inputSchema: {
         type: 'object',
@@ -158,9 +158,9 @@ export class TrafficTools {
    */
   static async execute(toolName: string, args: any, seoClient: SEOMonitorClient) {
     switch (toolName) {
-      case 'get_daily_traffic_data':
+      case 'seomonitor_get_daily_traffic_data':
         return this.executeGetDailyTraffic(args, seoClient);
-      case 'get_traffic_by_keywords':
+      case 'seomonitor_get_traffic_by_keywords':
         return this.executeGetTrafficByKeywords(args, seoClient);
       default:
         throw new Error(`Unknown traffic tool: ${toolName}`);

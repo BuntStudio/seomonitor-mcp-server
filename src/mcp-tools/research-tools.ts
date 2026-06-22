@@ -10,7 +10,7 @@ export class ResearchTools {
    */
   static getRelatedKeywordsDefinition() {
     return {
-      name: 'get_related_keywords',
+      name: 'seomonitor_get_related_keywords',
       description: 'Find related keyword suggestions for a topic',
       inputSchema: {
         type: 'object',
@@ -50,7 +50,7 @@ export class ResearchTools {
    */
   static getTopicOverviewDefinition() {
     return {
-      name: 'get_topic_overview',
+      name: 'seomonitor_get_topic_overview',
       description: 'Get aggregated search, SERP, and visibility data for topic keywords',
       inputSchema: {
         type: 'object',
@@ -74,7 +74,7 @@ export class ResearchTools {
    */
   static getDomainOverviewDefinition() {
     return {
-      name: 'get_domain_overview',
+      name: 'seomonitor_get_domain_overview',
       description: 'Domain SEO overview and metrics',
       inputSchema: {
         type: 'object',
@@ -106,7 +106,7 @@ export class ResearchTools {
    */
   static getDomainRankingKeywordsDefinition() {
     return {
-      name: 'get_domain_ranking_keywords',
+      name: 'seomonitor_get_domain_ranking_keywords',
       description: 'Keywords a domain ranks for',
       inputSchema: {
         type: 'object',
@@ -142,7 +142,7 @@ export class ResearchTools {
    */
   static getResearchKeywordDataDefinition() {
     return {
-      name: 'get_research_keyword_data',
+      name: 'seomonitor_get_research_keyword_data',
       description: 'Research-specific keyword metrics and SERP data',
       inputSchema: {
         type: 'object',
@@ -174,7 +174,7 @@ export class ResearchTools {
    */
   static getResearchRankingDataDefinition() {
     return {
-      name: 'get_research_ranking_data',
+      name: 'seomonitor_get_research_ranking_data',
       description: 'SERP, search, and ranking data for keywords with competitor analysis',
       inputSchema: {
         type: 'object',
@@ -352,17 +352,17 @@ export class ResearchTools {
    */
   static async execute(toolName: string, args: any, seoClient: SEOMonitorClient) {
     switch (toolName) {
-      case 'get_related_keywords':
+      case 'seomonitor_get_related_keywords':
         return this.executeGetRelatedKeywords(args, seoClient);
-      case 'get_topic_overview':
+      case 'seomonitor_get_topic_overview':
         return this.executeGetTopicOverview(args, seoClient);
-      case 'get_domain_overview':
+      case 'seomonitor_get_domain_overview':
         return this.executeGetDomainOverview(args, seoClient);
-      case 'get_domain_ranking_keywords':
+      case 'seomonitor_get_domain_ranking_keywords':
         return this.executeGetDomainRankingKeywords(args, seoClient);
-      case 'get_research_keyword_data':
+      case 'seomonitor_get_research_keyword_data':
         return this.executeGetResearchKeywordData(args, seoClient);
-      case 'get_research_ranking_data':
+      case 'seomonitor_get_research_ranking_data':
         return this.executeGetResearchRankingData(args, seoClient);
       default:
         throw new Error(`Unknown research tool: ${toolName}`);

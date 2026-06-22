@@ -10,7 +10,7 @@ export class CampaignTools {
    */
   static getDefinition() {
     return {
-      name: 'get_tracked_campaigns',
+      name: 'seomonitor_get_tracked_campaigns',
       description: 'Retrieve active tracked campaigns with details from SEOMonitor dashboard',
       inputSchema: {
         type: 'object',
