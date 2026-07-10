@@ -3,7 +3,8 @@ FROM node:20-alpine
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci
+# --ignore-scripts: the legacy prepublish hook runs tsc before src/ is copied
+RUN npm ci --ignore-scripts
 
 COPY tsconfig.json ./
 COPY src ./src
