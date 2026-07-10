@@ -36,6 +36,7 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 // MCP Server specific types
 export interface MCPServerConfig {
-  transport: 'stdio';
+  transport: 'stdio' | 'http';
+  port?: number;
   logLevel?: 'debug' | 'info' | 'warn' | 'error';
 }

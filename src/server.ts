@@ -1,5 +1,6 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import {
   CallToolRequestSchema,
   ErrorCode,
@@ -17,9 +18,9 @@ export class MCPServer {
   private seoToolNames: Set<string> | null = null;
   private defaultSeoClient: SEOMonitorClient | null = null;
 
-  constructor(config: MCPServerConfig) {
+  constructor(config: MCPServerConfig, apiKey?: string) {
     this.config = config;
-    
+
     this.server = new Server(
       {
         name: 'seomonitor-mcp-server',
@@ -33,25 +34,25 @@ export class MCPServer {
     );
 
     // Initialize default SEO client if API key is provided
-    this.initializeDefaultClient();
-    
+    this.initializeDefaultClient(apiKey);
+
     this.setupToolHandlers();
     this.setupErrorHandling();
-    
+
     logger.info('MCP Server initialized', { config });
   }
 
-  private initializeDefaultClient() {
-    const seoApiKey = process.env.SEOMONITOR_API_KEY;
+  private initializeDefaultClient(apiKey?: string) {
+    const seoApiKey = apiKey || process.env.SEOMONITOR_API_KEY;
     const seoBaseUrl = process.env.SEOMONITOR_BASE_URL || 'https://apigw.seomonitor.com';
-    
+
     if (seoApiKey) {
       const defaultSession: UserSession = {
         userId: 'default',
         apiKey: seoApiKey,
         baseUrl: seoBaseUrl
       };
-      
+
       this.defaultSeoClient = new SEOMonitorClient(defaultSession, logger);
       logger.info('Default SEOMonitor client initialized');
     }
@@ -152,7 +153,7 @@ export class MCPServer {
 
   private getDefaultSEOClient() {
     if (!this.defaultSeoClient) {
-      throw new Error('SEOMonitor API key not configured. Please set SEOMONITOR_API_KEY environment variable.');
+      throw new Error('SEOMonitor API key not configured. Set the SEOMONITOR_API_KEY environment variable (stdio) or provide the key in the request (HTTP).');
     }
     return this.defaultSeoClient;
   }
@@ -195,11 +196,14 @@ export class MCPServer {
       // onnotification might not be available in all MCP versions
     }
 
-    process.on('SIGINT', async () => {
-      logger.info('🛑 Shutting down MCP server...');
-      await this.server.close();
-      process.exit(0);
-    });
+    // Per-request instances (HTTP mode) must not accumulate process listeners
+    if (this.config.transport === 'stdio') {
+      process.on('SIGINT', async () => {
+        logger.info('🛑 Shutting down MCP server...');
+        await this.server.close();
+        process.exit(0);
+      });
+    }
   }
 
   // Start with STDIO transport
@@ -216,6 +220,11 @@ export class MCPServer {
     
     logger.info('✅ MCP Server connected and ready for Claude Desktop');
     // Note: stdout is used for MCP protocol, all logging goes to file
+  }
+
+  // Connect to an arbitrary transport (used by the HTTP transport)
+  async connect(transport: Transport): Promise<void> {
+    await this.server.connect(transport);
   }
 
   // Cleanup
