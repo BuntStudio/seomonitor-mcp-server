@@ -9,8 +9,20 @@ if (dsn) {
   Sentry.init({
     dsn,
     environment: process.env.SENTRY_ENVIRONMENT || 'production',
-    tracesSampleRate: 0,
+    // Performance: every tool call becomes a transaction (see traceToolCall).
+    // Full sampling is fine at beta volume; dial down via env when usage grows.
+    tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE ?? '1'),
   });
+}
+
+// Wraps a tool execution in its own transaction so the Performance view
+// shows per-tool timing (p95 by tool name) instead of a generic POST /mcp.
+export async function traceToolCall<T>(toolName: string, fn: () => Promise<T>): Promise<T> {
+  if (!sentryEnabled) return fn();
+  return Sentry.startSpan(
+    { name: toolName, op: 'mcp.tool', forceTransaction: true, attributes: { 'mcp.tool': toolName } },
+    fn,
+  );
 }
 
 export function captureToolError(error: unknown, context: { toolName: string; durationMs: number; httpStatus?: number }) {

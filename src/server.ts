@@ -10,7 +10,7 @@ import {
 import { SEOMonitorClient } from './clients/seomonitor-client.js';
 import { UserSession, MCPServerConfig } from './types.js';
 import { getAllToolDefinitions, executeToolByName, getAllToolNames } from './mcp-tools/index.js';
-import { captureToolError } from './sentry.js';
+import { captureToolError, traceToolCall } from './sentry.js';
 import { logger } from './logger.js';
 
 export class MCPServer {
@@ -104,7 +104,7 @@ export class MCPServer {
         // Handle SEOMonitor API tools only
         if (await this.isSEOMonitorTool(name)) {
           const seoClient = this.getDefaultSEOClient();
-          result = await executeToolByName(name, args, seoClient);
+          result = await traceToolCall(name, () => executeToolByName(name, args, seoClient));
         } else {
           throw new McpError(
             ErrorCode.MethodNotFound,
