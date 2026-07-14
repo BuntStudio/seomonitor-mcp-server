@@ -47,14 +47,22 @@ export function releaseIdentityLookup(kid: string) {
   identityLookupsInFlight.delete(kid);
 }
 
-// Identify the tenant without exposing the credential: the apigw JWT's kid
-// equals users.tyk_api_key in the admin DB (map back with
-// SELECT id, email FROM users WHERE tyk_api_key = '<id>'). Non-JWT keys fall
-// back to a truncated hash so distinct keys are still distinguishable.
+// Identify the tenant without exposing the credential. The apigw JWT payload
+// carries user_id directly; failing that, the header kid equals
+// users.tyk_api_key in the admin DB (SELECT id, email FROM users WHERE
+// tyk_api_key = '<kid>'). Non-JWT keys fall back to a truncated hash so
+// distinct keys are still distinguishable.
 export function deriveUserFromApiKey(apiKey: string | undefined): SentryUserRef | undefined {
   if (!apiKey) return undefined;
+  const [rawHeader, rawPayload] = apiKey.split('.');
   try {
-    const header = JSON.parse(Buffer.from(apiKey.split('.')[0], 'base64url').toString('utf8'));
+    const payload = JSON.parse(Buffer.from(rawPayload, 'base64url').toString('utf8'));
+    if (payload?.user_id) return { id: String(payload.user_id) };
+  } catch {
+    // not a JWT or no payload — try the header kid
+  }
+  try {
+    const header = JSON.parse(Buffer.from(rawHeader, 'base64url').toString('utf8'));
     if (header?.kid) return { id: String(header.kid) };
   } catch {
     // not a JWT — fall through to the hash
