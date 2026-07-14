@@ -127,13 +127,25 @@ export class SEOMonitorClient {
 
   // Rank Tracker - Keywords
   async getKeywordData(campaignId: number, options?: {
-    groupId?: number;
+    groupId?: number | string;
     startDate?: string;
     endDate?: string;
     limit?: number;
     offset?: number;
     device?: string;
     search?: string;
+    // Server-side ordering (per /keywords spec): order_by ∈ keyword |
+    // search_volume | year-over-year | rank | rank_trend | rank_trend_impact |
+    // opportunity. Lets callers get a true top/bottom-N across ALL keywords
+    // instead of sorting a single page.
+    orderBy?: string;
+    orderDirection?: 'asc' | 'desc';
+    intent?: string;
+    serpFeature?: string;
+    rankBand?: string;
+    brand?: boolean;
+    aioPresence?: boolean;
+    aisPresence?: boolean;
   }): Promise<SEOMonitorKeyword[]> {
     const params = new URLSearchParams();
     params.append('campaign_id', campaignId.toString());
@@ -145,6 +157,14 @@ export class SEOMonitorClient {
     if (options?.offset) params.append('offset', options.offset.toString());
     if (options?.device) params.append('device', options.device);
     if (options?.search) params.append('search', options.search);
+    if (options?.orderBy) params.append('order_by', options.orderBy);
+    if (options?.orderDirection) params.append('order_direction', options.orderDirection);
+    if (options?.intent) params.append('intent', options.intent);
+    if (options?.serpFeature) params.append('serp_feature', options.serpFeature);
+    if (options?.rankBand) params.append('rank_band', options.rankBand);
+    if (options?.brand !== undefined) params.append('brand', options.brand.toString());
+    if (options?.aioPresence !== undefined) params.append('aio_presence', options.aioPresence.toString());
+    if (options?.aisPresence !== undefined) params.append('ais_presence', options.aisPresence.toString());
 
     const response = await this.client.get(`/rank-tracker/v3.0/keywords?${params}`);
     return response.data;
@@ -276,20 +296,32 @@ export class SEOMonitorClient {
   async getDailyGroupVisibility(campaignId: number, options?: {
     startDate: string;
     endDate: string;
-    groupId?: number;
+    groupId?: number | string;
     keywordIds?: string;
     domain?: string;
+    domains?: string;
     featureVisibility?: string;
+    intent?: string;
+    hasAio?: boolean;
+    brand?: boolean;
+    nonBrand?: boolean;
+    top10?: boolean;
   }): Promise<any[]> {
     const params = new URLSearchParams();
     params.append('campaign_id', campaignId.toString());
     params.append('start_date', options?.startDate || '');
     params.append('end_date', options?.endDate || '');
-    
+
     if (options?.groupId) params.append('group_id', options.groupId.toString());
     if (options?.keywordIds) params.append('keyword_ids', options.keywordIds);
     if (options?.domain) params.append('domain', options.domain);
+    if (options?.domains) params.append('domains', options.domains);
     if (options?.featureVisibility) params.append('feature_visibility', options.featureVisibility);
+    if (options?.intent) params.append('intent', options.intent);
+    if (options?.hasAio !== undefined) params.append('has_aio', options.hasAio.toString());
+    if (options?.brand !== undefined) params.append('brand', options.brand.toString());
+    if (options?.nonBrand !== undefined) params.append('non_brand', options.nonBrand.toString());
+    if (options?.top10 !== undefined) params.append('top_10', options.top10.toString());
 
     const response = await this.client.get(`/rank-tracker/v3.0/groups/daily-visibility?${params}`);
     return response.data;
@@ -629,11 +661,16 @@ export class SEOMonitorClient {
   async getDailyGroupVisibilityAioMentions(campaignId: number, options: {
     startDate: string;
     endDate: string;
-    groupId?: number;
+    groupId?: number | string;
     keywordIds?: string;
     domain?: string;
     limit?: number;
     offset?: number;
+    intent?: string;
+    hasAio?: boolean;
+    brand?: boolean;
+    nonBrand?: boolean;
+    top10?: boolean;
   }): Promise<any[]> {
     const params = new URLSearchParams();
     params.append('campaign_id', campaignId.toString());
@@ -645,6 +682,11 @@ export class SEOMonitorClient {
     if (options.domain) params.append('domain', options.domain);
     if (options.limit) params.append('limit', options.limit.toString());
     if (options.offset) params.append('offset', options.offset.toString());
+    if (options.intent) params.append('intent', options.intent);
+    if (options.hasAio !== undefined) params.append('has_aio', options.hasAio.toString());
+    if (options.brand !== undefined) params.append('brand', options.brand.toString());
+    if (options.nonBrand !== undefined) params.append('non_brand', options.nonBrand.toString());
+    if (options.top10 !== undefined) params.append('top_10', options.top10.toString());
 
     const response = await this.client.get(`/rank-tracker/v3.0/groups/daily-visibility/aio-mentions?${params}`);
     return response.data;
@@ -684,10 +726,13 @@ export class SEOMonitorClient {
     startDate: string;
     endDate: string;
     groupId?: string;
+    keywordIds?: string;
     limit?: number;
     offset?: number;
     contentEncoding?: string;
     skipHtml?: boolean;
+    provider?: string;
+    engine?: string;
   }): Promise<any[]> {
     const params = new URLSearchParams();
     params.append('campaign_id', campaignId.toString());
@@ -695,10 +740,13 @@ export class SEOMonitorClient {
     params.append('end_date', options.endDate);
 
     if (options.groupId) params.append('group_id', options.groupId);
+    if (options.keywordIds) params.append('keyword_ids', options.keywordIds);
     if (options.limit) params.append('limit', options.limit.toString());
     if (options.offset) params.append('offset', options.offset.toString());
     if (options.contentEncoding) params.append('content_encoding', options.contentEncoding);
     if (options.skipHtml !== undefined) params.append('skip_html', options.skipHtml.toString());
+    if (options.provider) params.append('provider', options.provider);
+    if (options.engine) params.append('engine', options.engine);
 
     const response = await this.client.get(`/rank-tracker/v3.0/keywords/ais?${params}`);
     return response.data;
@@ -768,10 +816,17 @@ export class SEOMonitorClient {
   async getDailyGroupAisMentions(campaignId: number, options: {
     startDate: string;
     endDate: string;
-    groupId?: number;
+    groupId?: number | string;
     keywordIds?: string;
     domain?: string;
     metricsWeightedBySearchVolume?: number;
+    provider?: string;
+    engine?: string;
+    intent?: string;
+    hasAio?: boolean;
+    brand?: boolean;
+    nonBrand?: boolean;
+    top10?: boolean;
   }): Promise<any[]> {
     const params = new URLSearchParams();
     params.append('campaign_id', campaignId.toString());
@@ -784,6 +839,13 @@ export class SEOMonitorClient {
     if (options.metricsWeightedBySearchVolume !== undefined) {
       params.append('metrics_weighted_by_search_volume', options.metricsWeightedBySearchVolume.toString());
     }
+    if (options.provider) params.append('provider', options.provider);
+    if (options.engine) params.append('engine', options.engine);
+    if (options.intent) params.append('intent', options.intent);
+    if (options.hasAio !== undefined) params.append('has_aio', options.hasAio.toString());
+    if (options.brand !== undefined) params.append('brand', options.brand.toString());
+    if (options.nonBrand !== undefined) params.append('non_brand', options.nonBrand.toString());
+    if (options.top10 !== undefined) params.append('top_10', options.top10.toString());
 
     const response = await this.client.get(`/rank-tracker/v3.0/groups/daily-visibility/ais-mentions?${params}`);
     return response.data;
@@ -793,10 +855,17 @@ export class SEOMonitorClient {
   async getDailyGroupAisCitations(campaignId: number, options: {
     startDate: string;
     endDate: string;
-    groupId?: number;
+    groupId?: number | string;
     keywordIds?: string;
     domain?: string;
     metricsWeightedBySearchVolume?: number;
+    provider?: string;
+    engine?: string;
+    intent?: string;
+    hasAio?: boolean;
+    brand?: boolean;
+    nonBrand?: boolean;
+    top10?: boolean;
   }): Promise<any[]> {
     const params = new URLSearchParams();
     params.append('campaign_id', campaignId.toString());
@@ -809,6 +878,13 @@ export class SEOMonitorClient {
     if (options.metricsWeightedBySearchVolume !== undefined) {
       params.append('metrics_weighted_by_search_volume', options.metricsWeightedBySearchVolume.toString());
     }
+    if (options.provider) params.append('provider', options.provider);
+    if (options.engine) params.append('engine', options.engine);
+    if (options.intent) params.append('intent', options.intent);
+    if (options.hasAio !== undefined) params.append('has_aio', options.hasAio.toString());
+    if (options.brand !== undefined) params.append('brand', options.brand.toString());
+    if (options.nonBrand !== undefined) params.append('non_brand', options.nonBrand.toString());
+    if (options.top10 !== undefined) params.append('top_10', options.top10.toString());
 
     const response = await this.client.get(`/rank-tracker/v3.0/groups/daily-visibility/ais-citations?${params}`);
     return response.data;
