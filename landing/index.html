@@ -58,9 +58,10 @@
   pre.snippet { background: var(--ink); color: #e8f5ec; border-radius: 8px; padding: 14px 18px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; line-height: 1.5; overflow-x: auto; margin: 10px 0; }
   .kbd-path { color: var(--ink); font-weight: 600; }
 
-  /* Security note — deliberately plain prose, not a callout box */
-  .security-note { max-width: 760px; margin: 48px 0 0; padding-top: 20px; border-top: 1px solid var(--line); font-size: 14.5px; }
-  .security-note b { color: var(--ink); }
+  /* Security alert — monochrome note box; ink stays reserved for code */
+  .alert { background: #ffffff; color: var(--body); border: 1px solid var(--ink); border-radius: 8px; padding: 20px 24px; margin: 48px 0 0; font-size: 14.5px; line-height: 1.6; }
+  .alert .label { display: block; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; font-weight: 600; letter-spacing: 0.25em; text-transform: uppercase; color: var(--ink); margin-bottom: 8px; }
+  .alert b { color: var(--ink); }
 
   /* Toolkit */
   .tools { display: grid; grid-template-columns: 1fr 1fr; gap: 32px 44px; align-items: start; }
@@ -170,7 +171,7 @@ url = "https://mcp.seomonitor.com/YOUR_API_KEY/mcp"</pre>
       <p class="note">A JSON answer naming <b>seomonitor-mcp-server</b> means you're connected.</p>
     </div>
 
-    <p class="security-note"><b>Treat your connector URL like a password.</b> It contains your API key and grants read access to your account's campaign data. Don't paste it into shared documents or group chats. Regenerating your API key disconnects every assistant that uses the old URL.</p>
+    <div class="alert"><span class="label">Security</span><b>Treat your connector URL like a password.</b> It contains your API key and grants read access to your account's campaign data. Don't paste it into shared documents or group chats. Regenerating your API key disconnects every assistant that uses the old URL.</div>
   </div>
 </section>
 
