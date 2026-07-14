@@ -16,7 +16,7 @@ if (dsn) {
   });
 }
 
-export interface SentryUserRef { id: string }
+export interface SentryUserRef { id: string; username?: string }
 
 // Identify the tenant without exposing the credential: the apigw JWT's kid
 // equals users.tyk_api_key in the admin DB (map back with

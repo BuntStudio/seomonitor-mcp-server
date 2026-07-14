@@ -57,8 +57,29 @@ export class MCPServer {
 
       this.defaultSeoClient = new SEOMonitorClient(defaultSession, logger);
       this.sentryUser = deriveUserFromApiKey(seoApiKey);
+      this.resolveSentryIdentity();
       logger.info('Default SEOMonitor client initialized');
     }
+  }
+
+  // Upgrade the Sentry user from the JWT kid to the real account identity via
+  // the external API: the key owner's own company row (access_type=admin) has
+  // company_id == the user id. Best-effort — the kid fallback stays on failure.
+  private resolveSentryIdentity() {
+    if (!this.defaultSeoClient) return;
+    this.defaultSeoClient.getCompanies()
+      .then((companies: any) => {
+        const rows = Array.isArray(companies) ? companies : companies?.data;
+        if (!Array.isArray(rows) || rows.length === 0) return;
+        const own = rows.find((c: any) => String(c.access_type).toLowerCase() === 'admin') ?? rows[0];
+        if (own?.company_id != null) {
+          this.sentryUser = { id: String(own.company_id), username: own.company_name ?? undefined };
+          logger.info('Sentry identity resolved', { userId: own.company_id, name: own.company_name });
+        }
+      })
+      .catch(() => {
+        // keep the kid-based fallback
+      });
   }
 
   private setupToolHandlers() {
