@@ -16,7 +16,10 @@ if (dsn) {
   });
 }
 
-export interface SentryUserRef { id: string; username?: string }
+// id is the SEOmonitor user id (or JWT kid until resolved) and is what Sentry
+// displays; the account/company name rides as a tag, NOT username — Sentry's
+// UI prefers username over id and would hide the actual user behind it.
+export interface SentryUserRef { id: string; account?: string }
 
 // The HTTP transport creates a fresh MCPServer per request, so resolved
 // identities live here at module level, keyed by the JWT kid. Bounded by the
@@ -65,7 +68,10 @@ export function deriveUserFromApiKey(apiKey: string | undefined): SentryUserRef 
 export async function traceToolCall<T>(toolName: string, user: SentryUserRef | undefined, fn: () => Promise<T>): Promise<T> {
   if (!sentryEnabled) return fn();
   return Sentry.withIsolationScope((scope) => {
-    if (user) scope.setUser(user);
+    if (user) {
+      scope.setUser({ id: user.id });
+      if (user.account) scope.setTag('account', user.account);
+    }
     return Sentry.startSpan(
       { name: toolName, op: 'mcp.tool', forceTransaction: true, attributes: { 'mcp.tool': toolName } },
       fn,
@@ -76,7 +82,10 @@ export async function traceToolCall<T>(toolName: string, user: SentryUserRef | u
 export function captureToolError(error: unknown, context: { toolName: string; durationMs: number; httpStatus?: number; user?: SentryUserRef }) {
   if (!sentryEnabled) return;
   Sentry.withScope((scope) => {
-    if (context.user) scope.setUser(context.user);
+    if (context.user) {
+      scope.setUser({ id: context.user.id });
+      if (context.user.account) scope.setTag('account', context.user.account);
+    }
     scope.setTag('tool', context.toolName);
     if (context.httpStatus) scope.setTag('upstream_status', String(context.httpStatus));
     scope.setContext('tool_call', {

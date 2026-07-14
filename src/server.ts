@@ -84,7 +84,7 @@ export class MCPServer {
         if (!Array.isArray(rows) || rows.length === 0) { releaseIdentityLookup(kid); return; }
         const own = rows.find((c: any) => String(c.access_type).toLowerCase() === 'admin') ?? rows[0];
         if (own?.company_id != null) {
-          const user = { id: String(own.company_id), username: own.company_name ?? undefined };
+          const user = { id: String(own.company_id), account: own.company_name ?? undefined };
           cacheIdentity(kid, user);
           this.sentryUser = user;
           logger.info('Sentry identity resolved', { userId: own.company_id, name: own.company_name });
