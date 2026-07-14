@@ -10,6 +10,7 @@ import {
 import { SEOMonitorClient } from './clients/seomonitor-client.js';
 import { UserSession, MCPServerConfig } from './types.js';
 import { getAllToolDefinitions, executeToolByName, getAllToolNames } from './mcp-tools/index.js';
+import { captureToolError } from './sentry.js';
 import { logger } from './logger.js';
 
 export class MCPServer {
@@ -144,7 +145,13 @@ export class MCPServer {
           httpStatus: (error as any)?.response?.status,
           httpData: (error as any)?.response?.data
         });
-        
+
+        captureToolError(error, {
+          toolName: name,
+          durationMs: duration,
+          httpStatus: (error as any)?.response?.status,
+        });
+
         throw new McpError(ErrorCode.InternalError, `Tool execution failed: ${errorMessage}`);
       }
     });

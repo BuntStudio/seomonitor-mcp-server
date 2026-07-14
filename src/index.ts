@@ -12,6 +12,9 @@ console.log = () => {};
 config();
 console.log = originalConsoleLog;
 
+// Must come after dotenv so SENTRY_DSN from .env is visible.
+const { captureFatal, flushSentry } = await import('./sentry.js');
+
 interface CLIArgs {
   transport?: 'stdio' | 'http';
   port?: number;
@@ -142,12 +145,14 @@ async function main() {
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
   process.stderr.write(`Uncaught exception: ${error}\n`);
-  process.exit(1);
+  captureFatal(error, 'uncaughtException');
+  flushSentry().finally(() => process.exit(1));
 });
 
 process.on('unhandledRejection', (reason) => {
   process.stderr.write(`Unhandled rejection: ${reason}\n`);
-  process.exit(1);
+  captureFatal(reason, 'unhandledRejection');
+  flushSentry().finally(() => process.exit(1));
 });
 
 // Start the server
