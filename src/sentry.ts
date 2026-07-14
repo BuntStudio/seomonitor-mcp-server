@@ -82,7 +82,27 @@ export async function traceToolCall<T>(toolName: string, user: SentryUserRef | u
     }
     return Sentry.startSpan(
       { name: toolName, op: 'mcp.tool', forceTransaction: true, attributes: { 'mcp.tool': toolName } },
-      fn,
+      async (span) => {
+        try {
+          const result = await fn();
+          span.setStatus({ code: 1 }); // ok
+          return result;
+        } catch (error) {
+          // Upstream 4xx = caller error (bad campaign id, no access, feature
+          // not provisioned) — resolved as ok so failure_rate() only counts
+          // real failures (5xx/network/code); Sentry treats any non-ok status
+          // as a failure. The 4xx still produces an error event via
+          // captureToolError, so nothing is lost.
+          const status = (error as any)?.response?.status;
+          if (typeof status === 'number' && status >= 400 && status < 500) {
+            span.setAttribute('mcp.caller_error', status);
+            span.setStatus({ code: 1 });
+          } else {
+            span.setStatus({ code: 2, message: 'internal_error' });
+          }
+          throw error;
+        }
+      },
     );
   });
 }
