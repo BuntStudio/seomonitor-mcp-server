@@ -18,6 +18,32 @@ if (dsn) {
 
 export interface SentryUserRef { id: string; username?: string }
 
+// The HTTP transport creates a fresh MCPServer per request, so resolved
+// identities live here at module level, keyed by the JWT kid. Bounded by the
+// number of distinct API keys seen since boot.
+const resolvedIdentities = new Map<string, SentryUserRef>();
+const identityLookupsInFlight = new Set<string>();
+
+export function getCachedIdentity(kid: string): SentryUserRef | undefined {
+  return resolvedIdentities.get(kid);
+}
+
+export function cacheIdentity(kid: string, user: SentryUserRef) {
+  resolvedIdentities.set(kid, user);
+  identityLookupsInFlight.delete(kid);
+}
+
+// Returns true if this caller should perform the lookup (dedup across requests).
+export function claimIdentityLookup(kid: string): boolean {
+  if (resolvedIdentities.has(kid) || identityLookupsInFlight.has(kid)) return false;
+  identityLookupsInFlight.add(kid);
+  return true;
+}
+
+export function releaseIdentityLookup(kid: string) {
+  identityLookupsInFlight.delete(kid);
+}
+
 // Identify the tenant without exposing the credential: the apigw JWT's kid
 // equals users.tyk_api_key in the admin DB (map back with
 // SELECT id, email FROM users WHERE tyk_api_key = '<id>'). Non-JWT keys fall

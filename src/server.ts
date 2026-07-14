@@ -10,7 +10,7 @@ import {
 import { SEOMonitorClient } from './clients/seomonitor-client.js';
 import { UserSession, MCPServerConfig } from './types.js';
 import { getAllToolDefinitions, executeToolByName, getAllToolNames } from './mcp-tools/index.js';
-import { captureToolError, traceToolCall, deriveUserFromApiKey, SentryUserRef } from './sentry.js';
+import { captureToolError, traceToolCall, deriveUserFromApiKey, getCachedIdentity, cacheIdentity, claimIdentityLookup, releaseIdentityLookup, SentryUserRef } from './sentry.js';
 import { logger } from './logger.js';
 
 export class MCPServer {
@@ -19,6 +19,7 @@ export class MCPServer {
   private seoToolNames: Set<string> | null = null;
   private defaultSeoClient: SEOMonitorClient | null = null;
   private sentryUser: SentryUserRef | undefined;
+  private identityKey: string | undefined;
 
   constructor(config: MCPServerConfig, apiKey?: string) {
     this.config = config;
@@ -57,6 +58,7 @@ export class MCPServer {
 
       this.defaultSeoClient = new SEOMonitorClient(defaultSession, logger);
       this.sentryUser = deriveUserFromApiKey(seoApiKey);
+      this.identityKey = this.sentryUser?.id;
       this.resolveSentryIdentity();
       logger.info('Default SEOMonitor client initialized');
     }
@@ -64,21 +66,34 @@ export class MCPServer {
 
   // Upgrade the Sentry user from the JWT kid to the real account identity via
   // the external API: the key owner's own company row (access_type=admin) has
-  // company_id == the user id. Best-effort — the kid fallback stays on failure.
+  // company_id == the user id. The HTTP transport builds a fresh MCPServer per
+  // request, so the result is cached at module level keyed by kid — the first
+  // request pays one getCompanies call, later requests read the cache.
   private resolveSentryIdentity() {
-    if (!this.defaultSeoClient) return;
+    if (!this.defaultSeoClient || !this.identityKey) return;
+    const kid = this.identityKey;
+    const cached = getCachedIdentity(kid);
+    if (cached) {
+      this.sentryUser = cached;
+      return;
+    }
+    if (!claimIdentityLookup(kid)) return;
     this.defaultSeoClient.getCompanies()
       .then((companies: any) => {
         const rows = Array.isArray(companies) ? companies : companies?.data;
-        if (!Array.isArray(rows) || rows.length === 0) return;
+        if (!Array.isArray(rows) || rows.length === 0) { releaseIdentityLookup(kid); return; }
         const own = rows.find((c: any) => String(c.access_type).toLowerCase() === 'admin') ?? rows[0];
         if (own?.company_id != null) {
-          this.sentryUser = { id: String(own.company_id), username: own.company_name ?? undefined };
+          const user = { id: String(own.company_id), username: own.company_name ?? undefined };
+          cacheIdentity(kid, user);
+          this.sentryUser = user;
           logger.info('Sentry identity resolved', { userId: own.company_id, name: own.company_name });
+        } else {
+          releaseIdentityLookup(kid);
         }
       })
       .catch(() => {
-        // keep the kid-based fallback
+        releaseIdentityLookup(kid);
       });
   }
 
