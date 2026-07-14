@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SEOmonitor MCP — your SEO data, inside your AI assistant</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2322ca5c'/%3E%3Cpath d='M22 66 L42 46 L56 58 L78 32' stroke='%23171717' stroke-width='9' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+  /* SEOmonitor brand tokens (Shared Context/Brand/Brand Colors.md):
+     green #22ca5c · deep green #1ba84d · ink #171717 · grey #404040 · white bg. */
+  :root { --green: #22ca5c; --green-deep: #1ba84d; --ink: #171717; --body: #404040; --line: #e5e5e5; --soft: #fafafa; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Inter, -apple-system, "Segoe UI", sans-serif; color: var(--body); background: #ffffff; font-size: 16px; line-height: 1.6; }
+  h1, h2, h3, h4 { font-family: Manrope, Inter, sans-serif; color: var(--ink); }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+  /* Header */
+  .site-header { border-bottom: 1px solid var(--line); }
+  .site-header .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .site-header img { height: 26px; display: block; }
+  .site-header .tag { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green-deep); border: 1px solid var(--green); border-radius: 999px; padding: 4px 12px; }
+
+  /* Shared */
+  .kicker { display: flex; align-items: center; gap: 12px; color: var(--green-deep); font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; font-weight: 600; letter-spacing: 0.25em; text-transform: uppercase; }
+  .kicker::before { content: ""; width: 28px; height: 2px; background: var(--green); }
+  .section { padding: 72px 0 0; }
+  .section h2 { font-size: 34px; letter-spacing: -0.5px; font-weight: 800; margin: 16px 0 32px; }
+  .section h2 .g { color: var(--green-deep); }
+
+  /* Hero */
+  .hero { padding: 72px 0 0; }
+  .hero h1 { font-size: 52px; line-height: 1.1; letter-spacing: -1px; font-weight: 800; margin: 20px 0; max-width: 820px; }
+  .hero h1 .g { color: var(--green-deep); }
+  .hero p { font-size: 18px; max-width: 660px; margin: 0 0 28px; }
+  .btn { display: inline-block; background: var(--green); color: var(--ink); text-decoration: none; padding: 14px 28px; border-radius: 7px; font-weight: 700; font-family: Manrope, Inter, sans-serif; }
+  .btn:hover { background: var(--green-deep); color: #fff; }
+
+  /* Steps */
+  .steps { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .step-card { background: var(--soft); border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
+  .step-card .n { width: 32px; height: 32px; border-radius: 50%; background: var(--green); color: var(--ink); font-weight: 800; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; font-family: Manrope, Inter, sans-serif; }
+  .step-card h3 { margin: 0 0 8px; font-size: 17px; }
+  .step-card p { margin: 0; font-size: 14.5px; }
+  .step-card .url { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: var(--ink); font-weight: 600; word-break: keep-all; }
+
+  /* Client tabs */
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 32px 0 0; }
+  .tab { padding: 9px 18px; border: 1px solid var(--ink); border-radius: 999px; font-size: 14px; font-weight: 700; color: var(--ink); cursor: pointer; background: transparent; font-family: Manrope, Inter, sans-serif; }
+  .tab.active { background: var(--ink); color: #fff; }
+  .tab:hover:not(.active) { background: var(--soft); }
+  .client-panel { border: 1px solid var(--line); border-radius: 12px; padding: 24px 28px; margin-top: 14px; background: var(--soft); display: none; }
+  .client-panel.active { display: block; }
+  .client-panel h4 { margin: 0 0 10px; font-size: 16px; }
+  .client-panel .note { font-size: 14px; margin: 0 0 4px; }
+  .client-panel ol { font-size: 14px; margin: 10px 0 0; padding-left: 22px; }
+  .client-panel ol li { margin-bottom: 6px; }
+  .client-panel ol li:last-child { margin-bottom: 0; }
+  pre.snippet { background: var(--ink); color: #e8f5ec; border-radius: 8px; padding: 14px 18px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; line-height: 1.5; overflow-x: auto; margin: 10px 0; }
+  .kbd-path { color: var(--ink); font-weight: 600; }
+
+  /* Warning */
+  .warn { display: flex; gap: 12px; background: var(--soft); border: 1px solid var(--line); border-left: 4px solid var(--green); border-radius: 8px; padding: 16px 20px; font-size: 15px; margin-top: 40px; }
+
+  /* Toolkit */
+  .tools { display: grid; grid-template-columns: 1fr 1fr; gap: 32px 44px; align-items: start; }
+  .tool-group h3 { font-size: 16px; margin: 0 0 10px; }
+  .tool-group ul { margin: 0; padding: 0; list-style: none; }
+  .tool-group li { padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; }
+  .tool-group li:last-child { border-bottom: none; }
+  .tool-group li b { font-weight: 600; color: var(--ink); }
+  .tools-note { font-size: 13.5px; color: var(--body); margin: 24px 0 0; padding-top: 16px; border-top: 1px solid var(--line); }
+
+  /* Footer */
+  .footer { background: var(--ink); color: #b9b9b9; margin-top: 72px; padding: 28px 0; font-size: 13.5px; }
+  .footer .wrap { display: flex; justify-content: space-between; align-items: center; }
+  .footer b { color: #fff; }
+
+  @media (max-width: 900px) {
+    .steps, .tools { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 38px; }
+    .footer .wrap { flex-direction: column; gap: 8px; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <img src="data:image/png;base64,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" alt="SEOmonitor">
+    <span class="tag">MCP · beta</span>
+  </div>
+</header>
+
+<section class="hero wrap">
+  <div class="kicker">The connector</div>
+  <h1>Your SEO data, <span class="g">inside your AI assistant.</span></h1>
+  <p>Connect SEOmonitor to Claude, ChatGPT or any MCP-compatible assistant and ask in plain language — rankings, AI Overviews, AI Search visibility, campaigns and the AI Writer, answered from your live data.</p>
+  <a class="btn" href="#connect">Get connected in 3 steps</a>
+</section>
+
+<section class="section" id="connect">
+  <div class="wrap">
+    <div class="kicker">The setup</div>
+    <h2>Three steps, <span class="g">two minutes.</span></h2>
+    <div class="steps">
+      <div class="step-card"><div class="n">1</div><h3>Copy your API key</h3><p>In SEOmonitor, open your account settings and copy your API key. The assistant sees exactly the campaigns your account can see — nothing more.</p></div>
+      <div class="step-card"><div class="n">2</div><h3>Add the connector</h3><p>Your personal connector URL is<br><span class="url">mcp.seomonitor.com<wbr>/YOUR_API_KEY<wbr>/mcp</span><br>Pick your assistant below for exact steps.</p></div>
+      <div class="step-card"><div class="n">3</div><h3>Ask a question</h3><p>“Which keywords gained AI Overview presence this month?” · “Compare my brand across ChatGPT, Gemini and Perplexity.” · “Draft an outline for my top topic recommendation.”</p></div>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-panel="p-claude">Claude Desktop &amp; claude.ai</button>
+      <button class="tab" data-panel="p-code">Claude Code</button>
+      <button class="tab" data-panel="p-chatgpt">ChatGPT</button>
+      <button class="tab" data-panel="p-codex">Codex CLI</button>
+      <button class="tab" data-panel="p-any">Any MCP client</button>
+    </div>
+
+    <div class="client-panel active" id="p-claude">
+      <h4>Claude Desktop &amp; claude.ai</h4>
+      <p class="note">Available on paid Claude plans (desktop app and claude.ai on the web).</p>
+      <ol>
+        <li>Open <span class="kbd-path">Settings → Connectors</span></li>
+        <li>Click <span class="kbd-path">Add custom connector</span></li>
+        <li>Name it <b>SEOmonitor</b> and paste your connector URL:
+          <pre class="snippet">https://mcp.seomonitor.com/YOUR_API_KEY/mcp</pre></li>
+        <li>Save. The tools appear in the composer's connector menu — the first use of each tool asks for your approval.</li>
+      </ol>
+    </div>
+
+    <div class="client-panel" id="p-code">
+      <h4>Claude Code</h4>
+      <p class="note">One command in your terminal — <b>--scope user</b> makes it available in every project:</p>
+      <pre class="snippet">claude mcp add --transport http --scope user seomonitor \
+  https://mcp.seomonitor.com/YOUR_API_KEY/mcp</pre>
+      <p class="note">Check it's connected with <b>claude mcp list</b> · remove any time with <b>claude mcp remove seomonitor</b>. Tools are available in your next session.</p>
+    </div>
+
+    <div class="client-panel" id="p-chatgpt">
+      <h4>ChatGPT</h4>
+      <p class="note">Works today via Developer mode — Plus, Pro, Business, Enterprise and Edu plans (web).</p>
+      <ol>
+        <li>Open <span class="kbd-path">Settings → Connectors → Advanced settings</span> and turn on <b>Developer mode</b></li>
+        <li>Back in <span class="kbd-path">Connectors</span>, choose <span class="kbd-path">Create</span> (add a custom connector)</li>
+        <li>Name it <b>SEOmonitor</b>, paste your connector URL, choose <b>No authentication</b> (your key is already in the URL), save:
+          <pre class="snippet">https://mcp.seomonitor.com/YOUR_API_KEY/mcp</pre></li>
+        <li>In a chat, enable the connector from the composer's tools menu and ask away. Sign-in with your SEOmonitor account (no key handling) arrives with our upcoming public ChatGPT listing.</li>
+      </ol>
+    </div>
+
+    <div class="client-panel" id="p-codex">
+      <h4>Codex CLI</h4>
+      <p class="note">Add the server to your Codex config, then restart Codex:</p>
+      <pre class="snippet"># ~/.codex/config.toml
+[mcp_servers.seomonitor]
+url = "https://mcp.seomonitor.com/YOUR_API_KEY/mcp"</pre>
+      <p class="note">Verify with <b>codex mcp list</b>. Prefer local? The downloadable stdio package is in the developer docs.</p>
+    </div>
+
+    <div class="client-panel" id="p-any">
+      <h4>Any MCP client</h4>
+      <p class="note">The connector speaks standard <b>MCP Streamable HTTP</b> — point any compliant client or agent framework at your URL. No headers or extra auth setup; the key travels in the URL. Quick health check from a terminal:</p>
+      <pre class="snippet">curl -X POST https://mcp.seomonitor.com/YOUR_API_KEY/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"check","version":"1"}}}'</pre>
+      <p class="note">A JSON answer naming <b>seomonitor-mcp-server</b> means you're connected.</p>
+    </div>
+
+    <div class="warn"><div>⚠️</div><div><b style="color:var(--ink)">Treat your connector URL like a password.</b> It contains your API key and grants read access to your account's campaign data. Don't paste it into shared documents or group chats. Regenerating your API key disconnects every assistant that uses the old URL.</div></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="kicker">The toolkit</div>
+    <h2>What you can <span class="g">ask.</span></h2>
+    <div class="tools">
+      <div class="tool-group">
+        <h3>Rankings &amp; campaigns</h3>
+        <ul>
+          <li><b>List your campaigns</b> — every active campaign and its setup</li>
+          <li><b>Campaign overview at a glance</b> — visibility, average rank and movements in one answer</li>
+          <li><b>Top &amp; bottom keywords</b> — your best and worst performers, ranked</li>
+          <li><b>Search your tracked keywords</b> — filter the whole set, exact counts included</li>
+        </ul>
+      </div>
+      <div class="tool-group">
+        <h3>AI Overviews (Google)</h3>
+        <ul>
+          <li><b>Daily AI Overview ranks</b> — desktop &amp; mobile, with brand presence</li>
+          <li><b>Competitors inside AI Overviews</b> — who else appears, and where</li>
+          <li><b>Brand-mention visibility</b> — how often AI Overviews mention you</li>
+          <li><b>Citation visibility</b> — how often your site is cited</li>
+          <li><b>Your most-cited pages</b> — which pages AI answers link to</li>
+        </ul>
+      </div>
+      <div class="tool-group">
+        <h3>AI Search engines</h3>
+        <ul>
+          <li><b>AI Search answers for your keywords</b> — what ChatGPT, Gemini &amp; Perplexity say</li>
+          <li><b>Engine-by-engine performance</b> — your brand compared across the three</li>
+          <li><b>Where your brand shows up</b> — top keywords with AI Search presence</li>
+          <li><b>Daily AI Search ranks</b> — your site's position in AI answers</li>
+          <li><b>Mentions &amp; citations over time</b> — group-level AI Search visibility</li>
+        </ul>
+      </div>
+      <div class="tool-group">
+        <h3>AI Writer</h3>
+        <ul>
+          <li><b>Topic recommendations</b> — what to write next, per campaign</li>
+          <li><b>Check a generation in progress</b> — status of a running request</li>
+          <li><b>Read your drafts &amp; live articles</b> — outline, AI version, working draft, live</li>
+        </ul>
+      </div>
+    </div>
+    <p class="tools-note">AI Writer actions require an account with AI Writer enabled.</p>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="wrap">
+    <div><b>SEOmonitor MCP</b> · beta</div>
+    <div>Questions? Talk to your Customer Success manager.</div>
+  </div>
+</footer>
+
+<script>
+  // Tab switching — the only script on the page.
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.client-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.panel).classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
