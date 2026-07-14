@@ -10,7 +10,7 @@ import {
 import { SEOMonitorClient } from './clients/seomonitor-client.js';
 import { UserSession, MCPServerConfig } from './types.js';
 import { getAllToolDefinitions, executeToolByName, getAllToolNames } from './mcp-tools/index.js';
-import { captureToolError, traceToolCall } from './sentry.js';
+import { captureToolError, traceToolCall, deriveUserFromApiKey, SentryUserRef } from './sentry.js';
 import { logger } from './logger.js';
 
 export class MCPServer {
@@ -18,6 +18,7 @@ export class MCPServer {
   private config: MCPServerConfig;
   private seoToolNames: Set<string> | null = null;
   private defaultSeoClient: SEOMonitorClient | null = null;
+  private sentryUser: SentryUserRef | undefined;
 
   constructor(config: MCPServerConfig, apiKey?: string) {
     this.config = config;
@@ -55,6 +56,7 @@ export class MCPServer {
       };
 
       this.defaultSeoClient = new SEOMonitorClient(defaultSession, logger);
+      this.sentryUser = deriveUserFromApiKey(seoApiKey);
       logger.info('Default SEOMonitor client initialized');
     }
   }
@@ -104,7 +106,7 @@ export class MCPServer {
         // Handle SEOMonitor API tools only
         if (await this.isSEOMonitorTool(name)) {
           const seoClient = this.getDefaultSEOClient();
-          result = await traceToolCall(name, () => executeToolByName(name, args, seoClient));
+          result = await traceToolCall(name, this.sentryUser, () => executeToolByName(name, args, seoClient));
         } else {
           throw new McpError(
             ErrorCode.MethodNotFound,
@@ -150,6 +152,7 @@ export class MCPServer {
           toolName: name,
           durationMs: duration,
           httpStatus: (error as any)?.response?.status,
+          user: this.sentryUser,
         });
 
         throw new McpError(ErrorCode.InternalError, `Tool execution failed: ${errorMessage}`);
