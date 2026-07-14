@@ -90,9 +90,13 @@ export class AiWriterTools {
   }
 
   static getAllDefinitions() {
+    // Write tools are off by default: the public beta surface is read-only
+    // (Ship Happens consolidation decision, 2026-07). Re-enable with
+    // MCP_ENABLE_WRITE_TOOLS=true.
+    const writeEnabled = process.env.MCP_ENABLE_WRITE_TOOLS === 'true';
     return [
       this.getArticleContentDefinition(),
-      this.getGenerateArticlesDefinition(),
+      ...(writeEnabled ? [this.getGenerateArticlesDefinition()] : []),
       this.getGenerationStatusDefinition(),
       this.getTopicRecommendationsDefinition(),
     ];
@@ -105,6 +109,9 @@ export class AiWriterTools {
   }
 
   static async executeGenerateArticles(args: any, seoClient: SEOMonitorClient) {
+    if (process.env.MCP_ENABLE_WRITE_TOOLS !== 'true') {
+      throw new Error('seomonitor_generate_articles is disabled on this server (read-only beta surface)');
+    }
     const { campaign_id, articles } = args;
     const result = await seoClient.generateArticles(campaign_id, articles);
     return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };

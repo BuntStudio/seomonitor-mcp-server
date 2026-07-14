@@ -437,6 +437,9 @@ export class RankAdvancedTools {
    * Execute add_keywords tool
    */
   static async executeAddKeywords(args: any, seoClient: SEOMonitorClient) {
+    if (process.env.MCP_ENABLE_WRITE_TOOLS !== 'true') {
+      throw new Error('seomonitor_add_keywords is disabled on this server (read-only beta surface)');
+    }
     const { campaign_id, keywords, group_ids } = args;
 
     const result = await seoClient.addKeywords(campaign_id, keywords, {
@@ -525,6 +528,10 @@ export class RankAdvancedTools {
    * Get all tool definitions for this category
    */
   static getAllDefinitions() {
+    // Write tools are off by default: the public beta surface is read-only
+    // (Ship Happens consolidation decision, 2026-07). Re-enable with
+    // MCP_ENABLE_WRITE_TOOLS=true.
+    const writeEnabled = process.env.MCP_ENABLE_WRITE_TOOLS === 'true';
     return [
       this.getKeywordsCompetitionDefinition(),
       this.getSerpFeaturePresenceDefinition(),
@@ -532,7 +539,7 @@ export class RankAdvancedTools {
       this.getKeywordAiOverviewDefinition(),
       this.getRankingPagesDefinition(),
       this.getDailyGroupVisibilityDefinition(),
-      this.getAddKeywordsDefinition(),
+      ...(writeEnabled ? [this.getAddKeywordsDefinition()] : []),
       this.getKeywordImportStatusDefinition(),
     ];
   }
