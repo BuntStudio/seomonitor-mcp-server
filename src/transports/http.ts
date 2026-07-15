@@ -4,8 +4,11 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { MCPServer } from '../server.js';
 import { MCPServerConfig } from '../types.js';
 import { logger } from '../logger.js';
+import { RateLimiter } from '../rate-limiter.js';
 
 const JSON_BODY_LIMIT = '4mb';
+const RATE_LIMIT_RPM = Number(process.env.MCP_RATE_LIMIT_RPM || '60');
+const RATE_LIMIT_BURST = Number(process.env.MCP_RATE_LIMIT_BURST || '30');
 
 // Never log full API keys — show enough to correlate a user, nothing more
 function maskKey(apiKey: string): string {
@@ -40,6 +43,7 @@ export class HttpTransport {
   }
 
   async start(): Promise<void> {
+    const rateLimiter = new RateLimiter(RATE_LIMIT_RPM, RATE_LIMIT_BURST);
     const app = express();
     app.disable('x-powered-by');
     app.use(express.json({ limit: JSON_BODY_LIMIT }));
@@ -65,6 +69,14 @@ export class HttpTransport {
       const apiKey = extractApiKey(req);
       if (!apiKey) {
         jsonRpcError(res, 401, -32001, 'Missing SEOmonitor API key. Provide it as a Bearer token or in the connector URL: https://<host>/{API_KEY}/mcp');
+        return;
+      }
+
+      const retryAfter = rateLimiter.check(apiKey);
+      if (retryAfter > 0) {
+        logger.warn('Rate limit exceeded', { apiKey: maskKey(apiKey), retryAfter });
+        res.setHeader('Retry-After', String(retryAfter));
+        jsonRpcError(res, 429, -32029, `Rate limit exceeded (${RATE_LIMIT_RPM} requests/minute per API key). Retry after ${retryAfter}s.`);
         return;
       }
 
