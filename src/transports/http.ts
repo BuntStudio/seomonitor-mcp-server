@@ -61,9 +61,27 @@ export class HttpTransport {
       res.json({ status: 'ok', server: 'seomonitor-mcp-server' });
     });
 
+    // RFC 9728 protected-resource metadata: points OAuth-capable MCP clients
+    // (Claude, ChatGPT) at the authorization server. Key-in-URL connectors are
+    // unaffected. Clients probe both the root and path-suffixed well-known URI.
+    const publicUrl = (process.env.MCP_PUBLIC_URL || 'https://mcp.seomonitor.com').replace(/\/$/, '');
+    const authServerUrl = (process.env.MCP_AUTH_SERVER_URL || 'https://auth.seomonitor.com').replace(/\/$/, '');
+    const resourceMetadata = (_req: Request, res: Response) => {
+      res.json({
+        resource: `${publicUrl}/mcp`,
+        authorization_servers: [authServerUrl],
+        bearer_methods_supported: ['header'],
+      });
+    };
+    app.get('/.well-known/oauth-protected-resource', resourceMetadata);
+    app.get('/.well-known/oauth-protected-resource/mcp', resourceMetadata);
+
+    const resourceMetadataUrl = `${publicUrl}/.well-known/oauth-protected-resource`;
+
     const handleMcpPost = async (req: Request, res: Response) => {
       const apiKey = extractApiKey(req);
       if (!apiKey) {
+        res.setHeader('WWW-Authenticate', `Bearer resource_metadata="${resourceMetadataUrl}"`);
         jsonRpcError(res, 401, -32001, 'Missing SEOmonitor API key. Provide it as a Bearer token or in the connector URL: https://<host>/{API_KEY}/mcp');
         return;
       }
