@@ -166,7 +166,7 @@ Every tool is **read-only** — the server retrieves data from your SEOmonitor a
 ## 🔐 Authentication & Privacy
 
 - **API key** — passed as a Bearer token or in the connector URL. The key is the API token from your SEOmonitor profile; regenerating it there invalidates the old one.
-- The hosted server is **stateless**: it forwards each request to the SEOmonitor API with your key and does not store your data. Access logs are disabled on the hosted endpoint because connector URLs can carry API keys.
+- The hosted server is **stateless**: it forwards each request to the SEOmonitor API with your key and does not store your data.
 - **Privacy policy:** [SEOmonitor Privacy Policy](https://help.seomonitor.com/en/articles/2285725-seomonitor-privacy-policy)
 - Support: [GitHub Issues](https://github.com/BuntStudio/seomonitor-mcp-server/issues) or support@seomonitor.com
 
