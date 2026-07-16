@@ -11,6 +11,8 @@ export class RankAdvancedTools {
   static getKeywordsCompetitionDefinition() {
     return {
       name: 'seomonitor_get_keywords_competition',
+      title: 'Get Keywords Competition',
+      annotations: { title: 'Get Keywords Competition', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Competitor analysis for keywords',
       inputSchema: {
         type: 'object',
@@ -63,6 +65,8 @@ export class RankAdvancedTools {
   static getSerpFeaturePresenceDefinition() {
     return {
       name: 'seomonitor_get_serp_feature_presence',
+      title: 'Get SERP Feature Presence',
+      annotations: { title: 'Get SERP Feature Presence', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'SERP feature tracking over time',
       inputSchema: {
         type: 'object',
@@ -107,6 +111,8 @@ export class RankAdvancedTools {
   static getTopResultsDefinition() {
     return {
       name: 'seomonitor_get_top_results',
+      title: 'Get Top Results',
+      annotations: { title: 'Get Top Results', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Top 100 SERP results for keywords',
       inputSchema: {
         type: 'object',
@@ -151,6 +157,8 @@ export class RankAdvancedTools {
   static getKeywordAiOverviewDefinition() {
     return {
       name: 'seomonitor_get_keyword_ai_overview',
+      title: 'Get Keyword AI Overview',
+      annotations: { title: 'Get Keyword AI Overview', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'AI Overview presence data for keywords',
       inputSchema: {
         type: 'object',
@@ -195,6 +203,8 @@ export class RankAdvancedTools {
   static getRankingPagesDefinition() {
     return {
       name: 'seomonitor_get_ranking_pages',
+      title: 'Get Ranking Pages',
+      annotations: { title: 'Get Ranking Pages', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Pages ranking for specific keywords',
       inputSchema: {
         type: 'object',
@@ -239,6 +249,8 @@ export class RankAdvancedTools {
   static getDailyGroupVisibilityDefinition() {
     return {
       name: 'seomonitor_get_daily_group_visibility',
+      title: 'Get Daily Group Visibility',
+      annotations: { title: 'Get Daily Group Visibility', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Daily visibility metrics for keyword groups',
       inputSchema: {
         type: 'object',
@@ -283,6 +295,8 @@ export class RankAdvancedTools {
   static getAddKeywordsDefinition() {
     return {
       name: 'seomonitor_add_keywords',
+      title: 'Add Keywords',
+      annotations: { title: 'Add Keywords', readOnlyHint: false, destructiveHint: false, openWorldHint: false },
       description: 'Add new keywords to campaign',
       inputSchema: {
         type: 'object',
@@ -311,6 +325,8 @@ export class RankAdvancedTools {
   static getKeywordImportStatusDefinition() {
     return {
       name: 'seomonitor_get_keyword_import_status',
+      title: 'Get Keyword Import Status',
+      annotations: { title: 'Get Keyword Import Status', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Check status of keyword import task',
       inputSchema: {
         type: 'object',

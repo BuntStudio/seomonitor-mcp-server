@@ -9,6 +9,8 @@ export class AiSearchTools {
   static getKeywordAiSearchDefinition() {
     return {
       name: 'seomonitor_get_keyword_ai_search_data',
+      title: 'Get Keyword AI Search Data',
+      annotations: { title: 'Get Keyword AI Search Data', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'AI Search (AIS) data for keywords, including AI Search Mode answer content and presence',
       inputSchema: {
         type: 'object',
@@ -30,6 +32,8 @@ export class AiSearchTools {
   static getKeywordsCompetitionAisDefinition() {
     return {
       name: 'seomonitor_get_keywords_competition_ai_search',
+      title: 'Get Keywords Competition AI Search',
+      annotations: { title: 'Get Keywords Competition AI Search', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Competitor presence within AI Search (AIS) results for keywords',
       inputSchema: {
         type: 'object',
@@ -54,6 +58,8 @@ export class AiSearchTools {
   static getDailyAiSearchKeywordRanksDefinition() {
     return {
       name: 'seomonitor_get_daily_ai_search_keyword_ranks',
+      title: 'Get Daily AI Search Keyword Ranks',
+      annotations: { title: 'Get Daily AI Search Keyword Ranks', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Daily desktop/mobile ranks for your website in AI Search (AIS) results',
       inputSchema: {
         type: 'object',
@@ -77,6 +83,8 @@ export class AiSearchTools {
   static getDailyGroupAisMentionsDefinition() {
     return {
       name: 'seomonitor_get_daily_group_ai_search_brand_mentions',
+      title: 'Get Daily Group AI Search Brand Mentions',
+      annotations: { title: 'Get Daily Group AI Search Brand Mentions', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Daily group visibility for brand mentions inside AI Search (AIS) results',
       inputSchema: {
         type: 'object',
@@ -97,6 +105,8 @@ export class AiSearchTools {
   static getDailyGroupAisCitationsDefinition() {
     return {
       name: 'seomonitor_get_daily_group_ai_search_site_citations',
+      title: 'Get Daily Group AI Search Site Citations',
+      annotations: { title: 'Get Daily Group AI Search Site Citations', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Daily group visibility for site citations inside AI Search (AIS) results',
       inputSchema: {
         type: 'object',

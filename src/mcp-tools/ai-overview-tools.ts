@@ -9,6 +9,8 @@ export class AiOverviewTools {
   static getDailyKeywordRanksAioDefinition() {
     return {
       name: 'seomonitor_get_daily_keyword_ranks_ai_overview',
+      title: 'Get Daily Keyword Ranks AI Overview',
+      annotations: { title: 'Get Daily Keyword Ranks AI Overview', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Daily desktop/mobile ranks in AI Overview (AIO) results, with my_brand_present / any_brand_present flags',
       inputSchema: {
         type: 'object',
@@ -29,6 +31,8 @@ export class AiOverviewTools {
   static getKeywordsCompetitionAioDefinition() {
     return {
       name: 'seomonitor_get_keywords_competition_ai_overview',
+      title: 'Get Keywords Competition AI Overview',
+      annotations: { title: 'Get Keywords Competition AI Overview', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Competitor presence and ranks within AI Overview (AIO) results for keywords',
       inputSchema: {
         type: 'object',
@@ -51,6 +55,8 @@ export class AiOverviewTools {
   static getDailyGroupVisibilityAioMentionsDefinition() {
     return {
       name: 'seomonitor_get_daily_group_visibility_ai_overview_mentions',
+      title: 'Get Daily Group Visibility AI Overview Mentions',
+      annotations: { title: 'Get Daily Group Visibility AI Overview Mentions', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Daily group visibility for brand mentions inside AI Overview (AIO) results',
       inputSchema: {
         type: 'object',
@@ -72,6 +78,8 @@ export class AiOverviewTools {
   static getDailyGroupVisibilityAioCitationsDefinition() {
     return {
       name: 'seomonitor_get_daily_group_visibility_ai_overview_citations',
+      title: 'Get Daily Group Visibility AI Overview Citations',
+      annotations: { title: 'Get Daily Group Visibility AI Overview Citations', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Daily group visibility for site citations inside AI Overview (AIO) results',
       inputSchema: {
         type: 'object',

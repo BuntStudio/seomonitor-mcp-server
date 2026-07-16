@@ -9,6 +9,8 @@ export class VisibilityTools {
   static getDailyShareOfClicksDefinition() {
     return {
       name: 'seomonitor_get_daily_share_of_clicks',
+      title: 'Get Daily Share Of Clicks',
+      annotations: { title: 'Get Daily Share Of Clicks', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Daily estimated share of organic clicks for the campaign domain vs competitors',
       inputSchema: {
         type: 'object',
@@ -28,6 +30,8 @@ export class VisibilityTools {
   static getShareOfVoiceDefinition() {
     return {
       name: 'seomonitor_get_share_of_voice',
+      title: 'Get Share Of Voice',
+      annotations: { title: 'Get Share Of Voice', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Share of Voice on a given date for the campaign domain and its competitors',
       inputSchema: {
         type: 'object',
@@ -48,6 +52,8 @@ export class VisibilityTools {
   static getSerpVisibilityDefinition() {
     return {
       name: 'seomonitor_get_serp_visibility',
+      title: 'Get SERP Visibility',
+      annotations: { title: 'Get SERP Visibility', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'SERP Visibility data for the campaign (overall visibility across tracked keywords)',
       inputSchema: {
         type: 'object',

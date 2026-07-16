@@ -11,6 +11,8 @@ export class ForecastTools {
   static getForecastScenariosDefinition() {
     return {
       name: 'seomonitor_get_forecast_scenarios',
+      title: 'Get Forecast Scenarios',
+      annotations: { title: 'Get Forecast Scenarios', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'List available forecast scenarios',
       inputSchema: {
         type: 'object',
@@ -31,6 +33,8 @@ export class ForecastTools {
   static getForecastScenarioDataDefinition() {
     return {
       name: 'seomonitor_get_forecast_scenario_data',
+      title: 'Get Forecast Scenario Data',
+      annotations: { title: 'Get Forecast Scenario Data', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Detailed forecast for specific scenario',
       inputSchema: {
         type: 'object',
@@ -55,6 +59,8 @@ export class ForecastTools {
   static getForecastObjectiveDataDefinition() {
     return {
       name: 'seomonitor_get_forecast_objective_data',
+      title: 'Get Forecast Objective Data',
+      annotations: { title: 'Get Forecast Objective Data', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Objective-specific forecast data',
       inputSchema: {
         type: 'object',
@@ -79,6 +85,8 @@ export class ForecastTools {
   static getForecastKeywordsDefinition() {
     return {
       name: 'seomonitor_get_forecast_keywords',
+      title: 'Get Forecast Keywords',
+      annotations: { title: 'Get Forecast Keywords', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Keyword-level forecasting',
       inputSchema: {
         type: 'object',

@@ -9,6 +9,8 @@ export class AiWriterTools {
   static getArticleContentDefinition() {
     return {
       name: 'seomonitor_get_article_content',
+      title: 'Get Article Content',
+      annotations: { title: 'Get Article Content', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Get current Article content (Outline, AI Version, Working Draft and Live version)',
       inputSchema: {
         type: 'object',
@@ -24,6 +26,8 @@ export class AiWriterTools {
   static getGenerateArticlesDefinition() {
     return {
       name: 'seomonitor_generate_articles',
+      title: 'Generate Articles',
+      annotations: { title: 'Generate Articles', readOnlyHint: false, destructiveHint: false, openWorldHint: false },
       description: 'Generate outlines and/or full articles for a campaign. Each article supports topic, prompt, article_type, writing styles, internal links and image generation.',
       inputSchema: {
         type: 'object',
@@ -58,6 +62,8 @@ export class AiWriterTools {
   static getGenerationStatusDefinition() {
     return {
       name: 'seomonitor_get_generation_status',
+      title: 'Get Generation Status',
+      annotations: { title: 'Get Generation Status', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Poll the status of an AI Writer generation request',
       inputSchema: {
         type: 'object',
@@ -72,6 +78,8 @@ export class AiWriterTools {
   static getTopicRecommendationsDefinition() {
     return {
       name: 'seomonitor_get_topic_recommendations',
+      title: 'Get Topic Recommendations',
+      annotations: { title: 'Get Topic Recommendations', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Get AI Writer topic recommendations for a campaign',
       inputSchema: {
         type: 'object',

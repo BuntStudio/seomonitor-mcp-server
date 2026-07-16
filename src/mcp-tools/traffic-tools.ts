@@ -11,6 +11,8 @@ export class TrafficTools {
   static getDailyTrafficDefinition() {
     return {
       name: 'seomonitor_get_daily_traffic_data',
+      title: 'Get Daily Traffic Data',
+      annotations: { title: 'Get Daily Traffic Data', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Traffic metrics segmented by various dimensions',
       inputSchema: {
         type: 'object',
@@ -47,6 +49,8 @@ export class TrafficTools {
   static getTrafficByKeywordsDefinition() {
     return {
       name: 'seomonitor_get_traffic_by_keywords',
+      title: 'Get Traffic By Keywords',
+      annotations: { title: 'Get Traffic By Keywords', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Keyword-level traffic attribution',
       inputSchema: {
         type: 'object',

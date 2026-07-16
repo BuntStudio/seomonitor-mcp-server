@@ -11,6 +11,8 @@ export class CampaignTools {
   static getDefinition() {
     return {
       name: 'seomonitor_get_tracked_campaigns',
+      title: 'Get Tracked Campaigns',
+      annotations: { title: 'Get Tracked Campaigns', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Retrieve active tracked campaigns with details from SEOMonitor dashboard',
       inputSchema: {
         type: 'object',

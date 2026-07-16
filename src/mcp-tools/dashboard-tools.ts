@@ -8,6 +8,8 @@ export class DashboardTools {
   static getListCompaniesDefinition() {
     return {
       name: 'seomonitor_list_companies',
+      title: 'List Companies',
+      annotations: { title: 'List Companies', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'List the companies (accounts) accessible to the authenticated API key',
       inputSchema: {
         type: 'object',

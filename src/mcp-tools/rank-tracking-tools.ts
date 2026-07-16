@@ -11,6 +11,8 @@ export class RankTrackingTools {
   static getKeywordDataDefinition() {
     return {
       name: 'seomonitor_get_keyword_data',
+      title: 'Get Keyword Data',
+      annotations: { title: 'Get Keyword Data', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Get keyword metrics and rankings from SEOMonitor',
       inputSchema: {
         type: 'object',
@@ -75,6 +77,8 @@ export class RankTrackingTools {
   static getDailyKeywordRanksDefinition() {
     return {
       name: 'seomonitor_get_daily_keyword_ranks',
+      title: 'Get Daily Keyword Ranks',
+      annotations: { title: 'Get Daily Keyword Ranks', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Historical ranking data for keywords',
       inputSchema: {
         type: 'object',
@@ -135,6 +139,8 @@ export class RankTrackingTools {
   static getKeywordGroupsDefinition() {
     return {
       name: 'seomonitor_get_keyword_groups',
+      title: 'Get Keyword Groups',
+      annotations: { title: 'Get Keyword Groups', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Retrieve keyword groups organization',
       inputSchema: {
         type: 'object',
@@ -155,6 +161,8 @@ export class RankTrackingTools {
   static getGroupDataDefinition() {
     return {
       name: 'seomonitor_get_group_data',
+      title: 'Get Group Data',
+      annotations: { title: 'Get Group Data', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Group-level performance metrics',
       inputSchema: {
         type: 'object',

@@ -227,6 +227,8 @@ export class CompositeTools {
   static getTopKeywordsDefinition() {
     return {
       name: 'seomonitor_get_top_keywords',
+      title: 'Get Top Keywords',
+      annotations: { title: 'Get Top Keywords', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Get deterministic top or bottom N keywords ranked server-side across all tracked keywords. Use this for top/bottom/best/worst/highest/lowest keyword questions.',
       inputSchema: {
         type: 'object',
@@ -247,6 +249,8 @@ export class CompositeTools {
   static getFindKeywordsDefinition() {
     return {
       name: 'seomonitor_find_keywords',
+      title: 'Find Keywords',
+      annotations: { title: 'Find Keywords', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Filter keywords across the entire tracked set and return an exact count plus matched rows. Use for "how many keywords..." and whole-campaign filtered questions where paged results from seomonitor_get_keyword_data would give "first page only" answers.',
       inputSchema: {
         type: 'object',
@@ -279,6 +283,8 @@ export class CompositeTools {
   static getTopAiSearchKeywordsDefinition() {
     return {
       name: 'seomonitor_get_top_ai_search_keywords',
+      title: 'Get Top AI Search Keywords',
+      annotations: { title: 'Get Top AI Search Keywords', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Top keywords where a brand is present in AI Search across ChatGPT/Perplexity/Gemini. Scans the full tracked set and sorts by search volume. Use only_my_brand:false for any-brand presence, competitor/source gaps, or "other brands present but not us" discovery. Each row includes keyword_id; carry those IDs into seomonitor_get_keyword_ai_search_data or seomonitor_get_top_cited_landing_pages for follow-up evidence.',
       inputSchema: {
         type: 'object',
@@ -297,6 +303,8 @@ export class CompositeTools {
   static getCampaignWidgetsDefinition() {
     return {
       name: 'seomonitor_get_campaign_widgets',
+      title: 'Get Campaign Widgets',
+      annotations: { title: 'Get Campaign Widgets', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Get campaign overview widgets in one call: organic/blended visibility, average Google rank, SERP-feature visibility breakdowns, AI Overview mention percent, AI Search mention percent, and organic/AIO/AIS share of voice with competitor domains. Use for high-level summaries only; for keyword rows use seomonitor_get_keyword_data/seomonitor_find_keywords/seomonitor_get_top_keywords, for per-engine AIS use seomonitor_get_ai_search_engine_performance, and for citation source/landing-page evidence use seomonitor_get_top_cited_landing_pages.',
       inputSchema: {
         type: 'object',
@@ -316,6 +324,8 @@ export class CompositeTools {
   static getAiSearchEnginePerformanceDefinition() {
     return {
       name: 'seomonitor_get_ai_search_engine_performance',
+      title: 'Get AI Search Engine Performance',
+      annotations: { title: 'Get AI Search Engine Performance', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Compare brand performance across AI Search engines: ChatGPT (openai), Gemini, and Perplexity. Use first for any "ChatGPT vs Gemini vs Perplexity" question. Returns per-engine presence/citation trend summaries when the API supports provider filtering, plus enabled_providers/active_provider hints from groups/data. Read enabled_providers before answering; if only openai is enabled or non-openai rows are identical because provider filtering is unavailable, say this is ChatGPT-only/limited rather than inventing a real engine split.',
       inputSchema: {
         type: 'object',
@@ -333,6 +343,8 @@ export class CompositeTools {
   static getTopCitedLandingPagesDefinition() {
     return {
       name: 'seomonitor_get_top_cited_landing_pages',
+      title: 'Get Top Cited Landing Pages',
+      annotations: { title: 'Get Top Cited Landing Pages', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'MANDATORY for any Google AI Overview or AI Search cited URL/source/domain/landing-page question: "which pages are cited", "where are we cited", "which sources are cited", "are our pages cited", or "citations for those keywords". The tool aggregates citation URLs from AIO/AIS keyword endpoints so large links arrays do not get scrubbed from model context. If the user says "those keywords", pass keyword_ids from the prior result. Use only_campaign_domain:false for all cited sources; use only_campaign_domain:true to check the tracked campaign domain. Do not claim citation URLs are unavailable until this tool has been tried.',
       inputSchema: {
         type: 'object',

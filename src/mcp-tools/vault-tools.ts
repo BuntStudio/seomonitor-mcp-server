@@ -11,6 +11,8 @@ export class VaultTools {
   static getKeywordVaultDataDefinition() {
     return {
       name: 'seomonitor_get_keyword_vault_data',
+      title: 'Get Keyword Vault Data',
+      annotations: { title: 'Get Keyword Vault Data', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Access saved keyword lists data from Keyword Vault',
       inputSchema: {
         type: 'object',
@@ -63,6 +65,8 @@ export class VaultTools {
   static getKeywordVaultOverviewDefinition() {
     return {
       name: 'seomonitor_get_keyword_vault_overview',
+      title: 'Get Keyword Vault Overview',
+      annotations: { title: 'Get Keyword Vault Overview', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'Overview aggregated metrics for Keyword Vault list',
       inputSchema: {
         type: 'object',
@@ -87,6 +91,8 @@ export class VaultTools {
   static getVaultListsDefinition() {
     return {
       name: 'seomonitor_get_vault_lists',
+      title: 'Get Vault Lists',
+      annotations: { title: 'Get Vault Lists', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       description: 'List the Keyword Vault lists available for a campaign',
       inputSchema: {
         type: 'object',
