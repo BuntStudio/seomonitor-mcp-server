@@ -1,52 +1,59 @@
-# SEOMonitor MCP Server
+# SEOmonitor MCP Server
 
-A **Model Context Protocol (MCP) server** for accessing [SEOMonitor](https://www.seomonitor.com)’s API in AI assistants like Claude Desktop.
+The official **Model Context Protocol (MCP) server** for [SEOmonitor](https://www.seomonitor.com) — connect Claude, ChatGPT, Gemini CLI, or any MCP-compatible client to your SEO data: rank tracking, AI visibility (AI Overviews & AI search), keyword research, organic traffic, and forecasts.
+
+**Hosted server:** `https://mcp.seomonitor.com` (Streamable HTTP) — no install needed.
+Setup guide: [mcp.seomonitor.com](https://mcp.seomonitor.com)
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (hosted — recommended)
 
-### Run via npx (Recommended)
+You need a **SEOmonitor API key**: in the app, go to **Account → Edit profile → API key**.
+
+### Claude (custom connector)
+Settings → Connectors → **Add custom connector**, then use:
+
+```
+https://mcp.seomonitor.com/YOUR_API_KEY/mcp
+```
+
+### Any Streamable HTTP client
+```
+POST https://mcp.seomonitor.com/mcp
+Authorization: Bearer YOUR_API_KEY
+```
+
+Both forms hit the same server; use whichever your client supports. Rate limit: **60 requests/minute per API key** (burst 30) — over-limit calls get HTTP 429 with `Retry-After`.
+
+### Gemini CLI
+```bash
+gemini extensions install https://github.com/BuntStudio/seomonitor-mcp-server
+```
+(or add the server manually to `~/.gemini/settings.json` using the Bearer form above)
+
+---
+
+## 💻 Run locally (stdio)
+
+### Via npx
 ```bash
 npx github:BuntStudio/seomonitor-mcp-server
 ```
 
-### Local Development
+### Local clone
 ```bash
 git clone https://github.com/BuntStudio/seomonitor-mcp-server.git
 cd seomonitor-mcp-server
-npm install
-npm run build
-npm start
+npm install && npm run build && npm start
 ```
 
-Requirements:
-- Node.js **18+**
-- A valid **SEOMonitor API key**
+Requirements: Node.js **18+**, a valid SEOmonitor API key.
 
----
-
-## ⚙️ Configuration
-
-Set environment variables in `.env` or in your MCP config:
-
-```env
-SEOMONITOR_API_KEY=your-api-key-here
-
-# Optional
-SEOMONITOR_HTTP_TIMEOUT_MS=180000  # Default 180s, must be >120s
-LOG_LEVEL=info
-```
-
----
-
-## 📦 Claude Desktop Integration
-
-### Config File
-**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`  
+### Claude Desktop config (local stdio)
+**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
 **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
 
-#### Option A: Run via npx (auto-updates)
 ```json
 {
   "mcpServers": {
@@ -59,29 +66,29 @@ LOG_LEVEL=info
 }
 ```
 
-#### Option B: Local clone
-```json
-{
-  "mcpServers": {
-    "seomonitor": {
-      "command": "node",
-      "args": ["/absolute/path/to/seomonitor-mcp-server/dist/index.js"],
-      "env": { "SEOMONITOR_API_KEY": "your-seomonitor-api-key-here" }
-    }
-  }
-}
-```
+### Environment variables
+```env
+SEOMONITOR_API_KEY=your-api-key-here   # required for stdio mode
 
-Restart Claude Desktop to load tools.
+# Optional
+SEOMONITOR_HTTP_TIMEOUT_MS=180000      # default 180s, must be >120s
+LOG_LEVEL=info
+MCP_TRANSPORT=stdio                    # stdio (default) or http
+MCP_HTTP_PORT=3000                     # http transport only
+MCP_RATE_LIMIT_RPM=60                  # http transport: requests/min per key
+MCP_RATE_LIMIT_BURST=30
+MCP_ENABLE_WRITE_TOOLS=false           # keep false: public surface is read-only
+```
 
 ---
 
-## 🛠️ Available Tools (45 Total)
+## 🛠️ Available Tools (49, all read-only)
 
-> All tool names are prefixed with `seomonitor_` to avoid collisions with tools exposed by other MCP servers.
+Every tool is **read-only** — the server retrieves data from your SEOmonitor account and never modifies it. All tools carry MCP annotations (`readOnlyHint: true`) and are prefixed with `seomonitor_` to avoid collisions.
 
-### Campaign Management (1)
+### Campaigns & Account (2)
 - `seomonitor_get_tracked_campaigns`
+- `seomonitor_list_companies`
 
 ### Rank Tracking (4)
 - `seomonitor_get_keyword_data`
@@ -89,35 +96,34 @@ Restart Claude Desktop to load tools.
 - `seomonitor_get_keyword_groups`
 - `seomonitor_get_group_data`
 
-### Advanced Rank Tracking (8)
+### Advanced Rank Tracking (7)
 - `seomonitor_get_keywords_competition`
 - `seomonitor_get_serp_feature_presence`
 - `seomonitor_get_top_results`
 - `seomonitor_get_keyword_ai_overview`
 - `seomonitor_get_ranking_pages`
 - `seomonitor_get_daily_group_visibility`
-- `seomonitor_add_keywords`
 - `seomonitor_get_keyword_import_status`
 
-### AI Overview (AIO) (4)
+### AI Overview (4)
 - `seomonitor_get_daily_keyword_ranks_ai_overview`
 - `seomonitor_get_keywords_competition_ai_overview`
 - `seomonitor_get_daily_group_visibility_ai_overview_mentions`
 - `seomonitor_get_daily_group_visibility_ai_overview_citations`
 
-### AI Search (AIS) (5)
+### AI Search — ChatGPT, Perplexity, Gemini visibility (5)
 - `seomonitor_get_keyword_ai_search_data`
 - `seomonitor_get_keywords_competition_ai_search`
 - `seomonitor_get_daily_ai_search_keyword_ranks`
 - `seomonitor_get_daily_group_ai_search_brand_mentions`
 - `seomonitor_get_daily_group_ai_search_site_citations`
 
-### Visibility (3)
+### Visibility & Share of Voice (3)
 - `seomonitor_get_share_of_voice`
 - `seomonitor_get_daily_share_of_clicks`
 - `seomonitor_get_serp_visibility`
 
-### Traffic Analytics (2)
+### Organic Traffic (2)
 - `seomonitor_get_daily_traffic_data`
 - `seomonitor_get_traffic_by_keywords`
 
@@ -140,100 +146,81 @@ Restart Claude Desktop to load tools.
 - `seomonitor_get_keyword_vault_overview`
 - `seomonitor_get_vault_lists`
 
-### AI Writer (4)
+### Content / AI Writer (3)
 - `seomonitor_get_article_content`
-- `seomonitor_generate_articles`
 - `seomonitor_get_generation_status`
 - `seomonitor_get_topic_recommendations`
 
-### Dashboard (1)
-- `seomonitor_list_companies`
+### Insights & Composite (6)
+- `seomonitor_get_top_keywords`
+- `seomonitor_find_keywords`
+- `seomonitor_get_top_ai_search_keywords`
+- `seomonitor_get_campaign_widgets`
+- `seomonitor_get_ai_search_engine_performance`
+- `seomonitor_get_top_cited_landing_pages`
+
+> Two write tools (`seomonitor_generate_articles`, `seomonitor_add_keywords`) exist in the codebase but are **disabled by default** (`MCP_ENABLE_WRITE_TOOLS`). The public hosted server does not expose them.
+
+---
+
+## 🔐 Authentication & Privacy
+
+- **API key** — passed as a Bearer token or in the connector URL. The key is the API token from your SEOmonitor profile; regenerating it there invalidates the old one.
+- The hosted server is **stateless**: it forwards each request to the SEOmonitor API with your key and does not store your data. Access logs are disabled on the hosted endpoint because connector URLs can carry API keys.
+- **Privacy policy:** [SEOmonitor Privacy Policy](https://help.seomonitor.com/en/articles/2285725-seomonitor-privacy-policy)
+- Support: [GitHub Issues](https://github.com/BuntStudio/seomonitor-mcp-server/issues) or support@seomonitor.com
+
+---
+
+## 📊 Example prompts
+
+- *"Which of my campaigns lost the most visibility this month, and which keyword groups drove it?"*
+- *"How often is my brand mentioned in AI Overviews for my tracked keywords vs. my main competitor?"*
+- *"Find keyword opportunities around 'crm software' in the US with high search volume where I rank below position 10."*
+- *"Show my daily ranks for the 'pricing' keyword group over the last 30 days, desktop vs mobile."*
+- *"What does my current forecast scenario say about traffic by December?"*
 
 ---
 
 ## 🏗️ Development
 
-### Commands
 ```bash
 npm run dev     # Dev with auto-reload
 npm run build   # Build TypeScript
-npm start       # Start built server
+npm start       # Start built server (stdio)
+node dist/index.js --transport http --port 3000   # Streamable HTTP
 ```
 
-### Project Structure
+### Project structure
 ```
 src/
  ├── index.ts              # CLI entry
  ├── server.ts             # MCP server
+ ├── rate-limiter.ts       # Per-key token bucket (http transport)
  ├── clients/seomonitor-client.ts
- ├── mcp-tools/            # Tool implementations
- │   ├── campaign-tools.ts
- │   ├── rank-tracking-tools.ts
- │   ├── rank-advanced-tools.ts
- │   ├── ai-overview-tools.ts
- │   ├── ai-search-tools.ts
- │   ├── visibility-tools.ts
- │   ├── traffic-tools.ts
- │   ├── research-tools.ts
- │   ├── forecast-tools.ts
- │   ├── vault-tools.ts
- │   ├── ai-writer-tools.ts
- │   └── dashboard-tools.ts
+ ├── transports/           # stdio + Streamable HTTP
+ └── mcp-tools/            # Tool implementations (auto-discovered)
 ```
 
-### Adding Tools
-1. Define schema in `*-tools.ts`
-2. Implement execution
+### Adding tools
+1. Define the schema (with `title` + `annotations`) in a `*-tools.ts` file
+2. Implement the execution method
 3. Export — tools are auto-discovered
-
----
-
-## 📊 API Examples
-
-### Campaign Performance
-```typescript
-const campaigns = await mcp.callTool('seomonitor_get_tracked_campaigns');
-const data = await mcp.callTool('seomonitor_get_keyword_data', {
-  campaign_id: campaigns[0].campaign_info.id,
-  start_date: '2024-01-01',
-  end_date: '2024-01-31'
-});
-```
-
-### Competitive Intelligence
-```typescript
-const comp = await mcp.callTool('seomonitor_get_keywords_competition', {
-  campaign_id: 12345,
-  device: 'desktop',
-  start_date: '2024-01-01',
-  end_date: '2024-01-31'
-});
-```
-
-### Keyword Research
-```typescript
-const related = await mcp.callTool('seomonitor_get_related_keywords', {
-  topic: 'digital marketing',
-  country: 'US',
-  limit: 100
-});
-```
 
 ---
 
 ## 🔧 Troubleshooting
 
-- **Claude doesn’t load tools**: Check paths, API key, rebuild `dist/`, restart Claude.
-- **Auth errors**: Verify API key and permissions.
-- **Execution errors**: Enable debug logging.
-
-```bash
-npm start -- --log-level debug
-```
+- **Client doesn't load tools**: check the URL/API key; for stdio, rebuild `dist/` and restart the client.
+- **401 errors**: the API key is missing or was regenerated — copy the current one from your profile.
+- **429 errors**: you're over 60 requests/minute for your key; back off per the `Retry-After` header.
+- **Debug logging**: `npm start -- --log-level debug`
 
 ---
+
 ## 📚 Resources
 
-- [SEOMonitor API Docs](https://api-docs.seomonitor.com)  
-- [MCP Specification](https://modelcontextprotocol.io)  
+- [Hosted server & setup guide](https://mcp.seomonitor.com)
+- [SEOmonitor API docs](https://api-docs.seomonitor.com)
+- [MCP specification](https://modelcontextprotocol.io)
 - [GitHub Issues](https://github.com/BuntStudio/seomonitor-mcp-server/issues)
