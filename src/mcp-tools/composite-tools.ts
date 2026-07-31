@@ -331,7 +331,7 @@ export class CompositeTools {
         type: 'object',
         properties: {
           campaign_id: { type: 'integer', description: 'Required campaign ID' },
-          engines: { type: 'string', description: 'Optional: Comma-separated engines/providers to compare. Default: openai,gemini,perplexity. Use openai for ChatGPT' },
+          engines: { type: 'string', description: 'Optional: Comma-separated engines to compare, from openai, gemini, perplexity only. Default: all three. Use openai for ChatGPT; any other name is rejected, not guessed' },
           group_id: { type: 'string', description: 'Optional: Keyword group ID. Use 0 for all keywords. Defaults to 0' },
           ...DATE_RANGE_SCHEMA,
         },
@@ -619,10 +619,20 @@ export class CompositeTools {
     const { campaign_id } = args;
     const { startDate, endDate } = dateArgs(args);
     const groupId: string = args.group_id || '0';
-    const engines: string[] = (args.engines || 'openai,gemini,perplexity')
+    // An ai_search_llm the API can't parse is NOT rejected — it silently falls
+    // back to the campaign's active provider, so "chatgpt" or a typo would come
+    // back carrying another engine's numbers under the wrong label. Resolve the
+    // one safe alias and refuse the rest rather than querying them.
+    const requestedEngines: string[] = (args.engines || AI_SEARCH_ENGINES.join(','))
       .split(',')
-      .map((engine: string) => engine.trim())
-      .filter(Boolean);
+      .map((engine: string) => engine.trim().toLowerCase())
+      .filter(Boolean)
+      .map((engine: string) => (engine === 'chatgpt' ? 'openai' : engine));
+    const engines = [...new Set(requestedEngines.filter((e) => AI_SEARCH_ENGINES.includes(e as any)))];
+    const ignoredEngines = [...new Set(requestedEngines.filter((e) => !AI_SEARCH_ENGINES.includes(e as any)))];
+    if (!engines.length) {
+      throw new Error(`No recognised AI Search engine in "${args.engines}". Valid engines: ${AI_SEARCH_ENGINES.join(', ')} (use openai for ChatGPT).`);
+    }
     const last = (arr: any) => Array.isArray(arr) && arr.length ? arr[arr.length - 1] : null;
 
     const groupData = await safe('group_data', seoClient.getGroupData(campaign_id, groupId, { startDate, endDate }));
@@ -661,7 +671,8 @@ export class CompositeTools {
       group_id: groupId,
       enabled_providers: enabledProviders,
       active_provider: groupFirstForProviders?.ai_search?.active_provider ?? null,
-      note: 'openai maps to ChatGPT. Each engine row is filtered per provider, so the numbers are genuinely per-engine, not blended. Read "enabled" first: enabled:false means the campaign does not track that engine at all, so its zeros are absence of tracking, not absence of visibility — say so rather than reporting it as poor performance. enabled:null means the enablement list could not be read.',
+      ignored_engines: ignoredEngines.length ? ignoredEngines : undefined,
+      note: 'openai maps to ChatGPT. Each engine row is filtered to that engine, so the numbers are genuinely per-engine, not blended. Read "enabled" first: enabled:false means the campaign does not track that engine, so whatever it reports is residual, not a live signal — say the engine is not tracked instead of reporting it as weak performance. enabled:null means the enablement list could not be read. Any name in ignored_engines was not queried at all.',
       engines: engineRows,
       errors: groupData.error ? { group_data: String(groupData.error) } : undefined,
     });
