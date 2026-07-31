@@ -13,7 +13,7 @@ export class CampaignTools {
       name: 'seomonitor_get_tracked_campaigns',
       title: 'Get Tracked Campaigns',
       annotations: { title: 'Get Tracked Campaigns', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Retrieve active tracked campaigns with details from SEOMonitor dashboard',
+      description: 'Retrieve active tracked campaigns with details from SEOMonitor dashboard. Call this before interpreting any rank or device comparison: campaign_info carries primary_device plus max_tracked_position_desktop and max_tracked_position_mobile, and the two devices are frequently tracked to different depths (e.g. primary mobile to 100, desktop only to 20). A keyword sitting at the shallower device\'s cap is untracked beyond that point, NOT a rank of that value — never read it as the device performing badly.',
       inputSchema: {
         type: 'object',
         properties: {

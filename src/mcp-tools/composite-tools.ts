@@ -17,6 +17,7 @@ const DEVICE_VALUES = ['desktop', 'mobile'] as const;
 const TOP_KEYWORD_METRICS = ['volume', 'rank', 'opportunity', 'yoy', 'rank_trend'] as const;
 const DIRECTIONS = ['top', 'bottom'] as const;
 const AI_SEARCH_ENGINES = ['openai', 'gemini', 'perplexity'] as const;
+const FIND_ORDER_FIELDS = ['search_volume', 'rank', 'opportunity', 'keyword'] as const;
 
 function defaultDateRange(): { startDate: string; endDate: string } {
   const end = new Date();
@@ -61,6 +62,20 @@ function compactJson(data: unknown): string {
 
 function textResult(data: unknown) {
   return { content: [{ type: 'text', text: compactJson(data) }] };
+}
+
+// compactJson truncates mid-string, which turns an oversized page into invalid
+// JSON. For a paged result that is worse than a short page: the caller can't
+// read `returned` and its offset arithmetic silently breaks. Drop rows until
+// the payload fits and let the caller page again.
+function fitPagedResult(build: (rows: any[]) => any, rows: any[]) {
+  let page = rows;
+  let payload = build(page);
+  while (page.length > 1 && JSON.stringify(payload).length > MAX_RESULT_LENGTH) {
+    page = page.slice(0, Math.max(1, Math.floor(page.length * 0.8)));
+    payload = build(page);
+  }
+  return textResult(payload);
 }
 
 function normalizeHost(value: string | undefined | null): string | null {
@@ -251,7 +266,7 @@ export class CompositeTools {
       name: 'seomonitor_find_keywords',
       title: 'Find Keywords',
       annotations: { title: 'Find Keywords', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Filter keywords across the entire tracked set and return an exact count plus matched rows. Use for "how many keywords..." and whole-campaign filtered questions where paged results from seomonitor_get_keyword_data would give "first page only" answers.',
+      description: 'Filter keywords across the entire tracked set and return an exact count plus matched rows. Use for "how many keywords..." and whole-campaign filtered questions where paged results from seomonitor_get_keyword_data would give "first page only" answers. Rows come back in a stable order and limit/offset page through the matched set, so advancing offset by "returned" while has_more is true reaches further rows without repeats — no dedup pass needed. Note "returned" can be below the requested limit when a full page would not fit the response budget; trust "returned", not "limit".',
       inputSchema: {
         type: 'object',
         properties: {
@@ -271,8 +286,11 @@ export class CompositeTools {
           in_aio: { type: 'boolean', description: 'Optional: Filter by Google AI Overview brand presence' },
           in_ai_search: { type: 'boolean', description: 'Optional: Filter by AI Search brand presence across ChatGPT/Perplexity/Gemini' },
           group_id: { type: 'string', description: 'Optional: Keyword group ID' },
-          device: { type: 'string', enum: [...DEVICE_VALUES], description: 'Optional: Device for rank/SERP/AIO filters. Default desktop' },
-          limit: { type: 'integer', description: 'Optional: Max matched rows to return. Default 50, max 100' },
+          device: { type: 'string', enum: [...DEVICE_VALUES], description: 'Optional: Device for rank/SERP/AIO filters. Default desktop. The campaign may track this device to a shallower depth than the other — check primary_device and max_tracked_position_desktop/mobile from seomonitor_get_tracked_campaigns before reading a device comparison' },
+          limit: { type: 'integer', description: 'Optional: Max matched rows to return per page. Default 50, max 100' },
+          offset: { type: 'integer', description: 'Optional: Row offset into the matched set. Default 0. Rows come back in a stable order, so advancing offset by "returned" never repeats or skips a keyword. Each call re-scans the campaign, so use it to reach a specific slice or to walk a modest set — for a long listing, narrow with group_id/filters first' },
+          order_by: { type: 'string', enum: [...FIND_ORDER_FIELDS], description: 'Optional: Sort the matched set before paging. Default is by keyword_id (stable, arbitrary)' },
+          order_direction: { type: 'string', enum: ['asc', 'desc'], description: 'Optional: Sort direction for order_by. Default desc. Keywords with no value sort last either way' },
           ...DATE_RANGE_SCHEMA,
         },
         required: ['campaign_id'],
@@ -480,7 +498,38 @@ export class CompositeTools {
       return true;
     });
 
-    const keywords = matched.slice(0, limit).map((k: any) => ({
+    // The whole matched set is already in memory, so page it here rather than
+    // making the caller re-run the scan. keyword_id breaks ties (and is the
+    // fallback order) so successive offsets can never overlap or skip a row.
+    const orderBy = FIND_ORDER_FIELDS.includes(args.order_by) ? args.order_by : null;
+    const descending = String(args.order_direction ?? 'desc').toLowerCase() !== 'asc';
+    const sortKey = (k: any) => {
+      if (orderBy === 'search_volume') return k.search_data?.search_volume ?? null;
+      if (orderBy === 'rank') return k.ranking_data?.[device]?.rank ?? null;
+      if (orderBy === 'opportunity') return k.opportunity ?? null;
+      if (orderBy === 'keyword') return k.keyword ?? null;
+      return null;
+    };
+    if (orderBy) {
+      matched.sort((a: any, b: any) => {
+        const x = sortKey(a);
+        const y = sortKey(b);
+        // Nulls last regardless of direction — an unranked keyword is not "best".
+        if (x == null && y == null) return Number(a.keyword_id) - Number(b.keyword_id);
+        if (x == null) return 1;
+        if (y == null) return -1;
+        const cmp = typeof x === 'string' || typeof y === 'string'
+          ? String(x).localeCompare(String(y))
+          : Number(x) - Number(y);
+        if (cmp !== 0) return descending ? -cmp : cmp;
+        return Number(a.keyword_id) - Number(b.keyword_id);
+      });
+    } else {
+      matched.sort((a: any, b: any) => Number(a.keyword_id) - Number(b.keyword_id));
+    }
+
+    const offset = Math.max(0, Math.trunc(Number(args.offset ?? 0)) || 0);
+    const keywords = matched.slice(offset, offset + limit).map((k: any) => ({
       keyword: k.keyword,
       keyword_id: k.keyword_id,
       intent: k.search_intent ?? null,
@@ -488,7 +537,6 @@ export class CompositeTools {
       mobile_rank: k.ranking_data?.mobile?.rank ?? null,
       search_volume: k.search_data?.search_volume ?? null,
       opportunity: k.opportunity ?? null,
-      rank_band: rankBand,
       brand: keywordBrandFlag(k) ?? null,
       aio_presence: hasAioPresence(k, device),
       ais_presence: k.ai_search?.any_brand_presence ?? k.ai_search?.my_brand_presence ?? null,
@@ -496,7 +544,7 @@ export class CompositeTools {
       in_ai_search: k.ai_search?.any_brand_presence ?? null,
     }));
 
-    return textResult({
+    return fitPagedResult((page: any[]) => ({
       filters: {
         intent,
         rank_max: rankMax,
@@ -517,11 +565,15 @@ export class CompositeTools {
       },
       total_scanned: rows.length,
       total_matched: matched.length,
-      returned: keywords.length,
+      returned: page.length,
+      offset,
+      order_by: orderBy ?? 'keyword_id',
+      order_direction: orderBy ? (descending ? 'desc' : 'asc') : 'asc',
+      has_more: offset + page.length < matched.length,
       complete,
-      note: `Scanned ${rows.length} tracked keywords. A rank of ${capRank === -Infinity ? 'n/a' : capRank} is treated as not ranking.`,
-      keywords,
-    });
+      note: `Scanned ${rows.length} tracked keywords; ${matched.length} matched. Ranks are ${device} — check the campaign's primary_device and max_tracked_position_* from seomonitor_get_tracked_campaigns before comparing devices, because the secondary device is often tracked to a shallower depth. A rank of ${capRank === -Infinity ? 'n/a' : capRank} is treated as not ranking. To list every match, repeat this call with offset advanced by "returned" (which may be smaller than limit when a page would not fit the response budget) until has_more is false.`,
+      keywords: page,
+    }), keywords);
   }
 
   static async executeGetTopAiSearchKeywords(args: any, seoClient: SEOMonitorClient) {
