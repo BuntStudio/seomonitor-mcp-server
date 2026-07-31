@@ -326,7 +326,7 @@ export class CompositeTools {
       name: 'seomonitor_get_ai_search_engine_performance',
       title: 'Get AI Search Engine Performance',
       annotations: { title: 'Get AI Search Engine Performance', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Compare brand performance across AI Search engines: ChatGPT (openai), Gemini, and Perplexity. Use first for any "ChatGPT vs Gemini vs Perplexity" question. Returns per-engine presence/citation trend summaries when the API supports provider filtering, plus enabled_providers/active_provider hints from groups/data. Read enabled_providers before answering; if only openai is enabled or non-openai rows are identical because provider filtering is unavailable, say this is ChatGPT-only/limited rather than inventing a real engine split.',
+      description: 'Compare brand performance across AI Search engines: ChatGPT (openai), Gemini, and Perplexity. Use first for any "ChatGPT vs Gemini vs Perplexity" question. Returns per-engine presence/citation trend summaries, each row filtered to that engine, plus enabled_providers/active_provider for the campaign. Every row carries an "enabled" flag: report engines with enabled:false as not tracked on this campaign, never as zero/poor visibility.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -623,10 +623,20 @@ export class CompositeTools {
     const last = (arr: any) => Array.isArray(arr) && arr.length ? arr[arr.length - 1] : null;
 
     const groupData = await safe('group_data', seoClient.getGroupData(campaign_id, groupId, { startDate, endDate }));
+    const groupFirstForProviders: any = Array.isArray(groupData.value) ? groupData.value[0] : null;
+    const enabledProviders: string[] | null = groupFirstForProviders?.ai_search?.enabled_providers ?? null;
+    // The API honours ai_search_llm even for a provider the campaign never
+    // enabled — it returns empty rows rather than an error. Without this flag a
+    // zero reads as "no visibility on Perplexity" instead of "Perplexity isn't
+    // tracked here".
+    const isEnabled = (engine: string): boolean | null => (
+      Array.isArray(enabledProviders) ? enabledProviders.includes(engine) : null
+    );
+
     const engineRows = await Promise.all(engines.map(async (engine) => {
       const [mentions, citations] = await Promise.all([
-        safe(`${engine}_mentions`, seoClient.getDailyGroupAisMentions(campaign_id, { startDate, endDate, groupId, provider: engine, engine })),
-        safe(`${engine}_citations`, seoClient.getDailyGroupAisCitations(campaign_id, { startDate, endDate, groupId, provider: engine, engine })),
+        safe(`${engine}_mentions`, seoClient.getDailyGroupAisMentions(campaign_id, { startDate, endDate, groupId, provider: engine })),
+        safe(`${engine}_citations`, seoClient.getDailyGroupAisCitations(campaign_id, { startDate, endDate, groupId, provider: engine })),
       ]);
       const mentionRows = mentions.value;
       const citationRows = citations.value;
@@ -634,6 +644,7 @@ export class CompositeTools {
       const citationLast = last(citationRows);
       return {
         engine,
+        enabled: isEnabled(engine),
         brand_presence_latest: mentionLast?.brand_presence_visibility ?? null,
         source_citation_latest: citationLast?.source_citation_visibility ?? citationLast?.citation_visibility ?? null,
         mentions_points: Array.isArray(mentionRows) ? mentionRows.length : 0,
@@ -642,14 +653,12 @@ export class CompositeTools {
       };
     }));
 
-    const groupValue: any = groupData.value;
-    const groupFirst = Array.isArray(groupValue) ? groupValue[0] : null;
     return textResult({
       as_of: { start_date: startDate, end_date: endDate },
       group_id: groupId,
-      enabled_providers: groupFirst?.ai_search?.enabled_providers ?? null,
-      active_provider: groupFirst?.ai_search?.active_provider ?? null,
-      note: 'openai maps to ChatGPT. If all engines return identical values while enabled_providers has one item, the upstream account may only have one provider enabled or may ignore provider filters.',
+      enabled_providers: enabledProviders,
+      active_provider: groupFirstForProviders?.ai_search?.active_provider ?? null,
+      note: 'openai maps to ChatGPT. Each engine row is filtered per provider, so the numbers are genuinely per-engine, not blended. Read "enabled" first: enabled:false means the campaign does not track that engine at all, so its zeros are absence of tracking, not absence of visibility — say so rather than reporting it as poor performance. enabled:null means the enablement list could not be read.',
       engines: engineRows,
       errors: groupData.error ? { group_data: String(groupData.error) } : undefined,
     });

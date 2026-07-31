@@ -732,7 +732,6 @@ export class SEOMonitorClient {
     contentEncoding?: string;
     skipHtml?: boolean;
     provider?: string;
-    engine?: string;
   }): Promise<any[]> {
     const params = new URLSearchParams();
     params.append('campaign_id', campaignId.toString());
@@ -745,8 +744,7 @@ export class SEOMonitorClient {
     if (options.offset) params.append('offset', options.offset.toString());
     if (options.contentEncoding) params.append('content_encoding', options.contentEncoding);
     if (options.skipHtml !== undefined) params.append('skip_html', options.skipHtml.toString());
-    if (options.provider) params.append('provider', options.provider);
-    if (options.engine) params.append('engine', options.engine);
+    if (options.provider) params.append('ai_search_llm', options.provider);
 
     const response = await this.client.get(`/rank-tracker/v3.0/keywords/ais?${params}`);
     return response.data;
@@ -821,7 +819,6 @@ export class SEOMonitorClient {
     domain?: string;
     metricsWeightedBySearchVolume?: number;
     provider?: string;
-    engine?: string;
     intent?: string;
     hasAio?: boolean;
     brand?: boolean;
@@ -839,8 +836,7 @@ export class SEOMonitorClient {
     if (options.metricsWeightedBySearchVolume !== undefined) {
       params.append('metrics_weighted_by_search_volume', options.metricsWeightedBySearchVolume.toString());
     }
-    if (options.provider) params.append('provider', options.provider);
-    if (options.engine) params.append('engine', options.engine);
+    if (options.provider) params.append('ai_search_llm', options.provider);
     if (options.intent) params.append('intent', options.intent);
     if (options.hasAio !== undefined) params.append('has_aio', options.hasAio.toString());
     if (options.brand !== undefined) params.append('brand', options.brand.toString());
@@ -860,7 +856,6 @@ export class SEOMonitorClient {
     domain?: string;
     metricsWeightedBySearchVolume?: number;
     provider?: string;
-    engine?: string;
     intent?: string;
     hasAio?: boolean;
     brand?: boolean;
@@ -878,8 +873,7 @@ export class SEOMonitorClient {
     if (options.metricsWeightedBySearchVolume !== undefined) {
       params.append('metrics_weighted_by_search_volume', options.metricsWeightedBySearchVolume.toString());
     }
-    if (options.provider) params.append('provider', options.provider);
-    if (options.engine) params.append('engine', options.engine);
+    if (options.provider) params.append('ai_search_llm', options.provider);
     if (options.intent) params.append('intent', options.intent);
     if (options.hasAio !== undefined) params.append('has_aio', options.hasAio.toString());
     if (options.brand !== undefined) params.append('brand', options.brand.toString());
