@@ -381,6 +381,29 @@ export class CompositeTools {
     };
   }
 
+  static getAiSearchPositioningDefinition() {
+    return {
+      name: 'seomonitor_get_ai_search_positioning',
+      title: 'Get AI Search Positioning',
+      annotations: { title: 'Get AI Search Positioning', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      description: 'The honest per-keyword AI Search picture in one call: for each keyword, was the brand NAMED in the answer, was one of our URLs CITED as a source, at what citation rank, and which competitor domains were cited alongside. Use this for "how are we positioned in AI Search", "are we mentioned or just cited", "who is cited instead of us". Naming and citing diverge constantly, so each keyword is bucketed as both / mentioned_not_cited / cited_not_mentioned / neither — never collapse them into one presence number. Does not return the answer text; use seomonitor_get_keyword_ai_search_data with include_raw_content for that.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          campaign_id: { type: 'integer', description: 'Required campaign ID' },
+          group_id: { type: 'string', description: 'Optional: Keyword group ID. Scope to a group — most keywords are absent from AI answers, so a whole-campaign pull is mostly empty rows' },
+          keyword_ids: { type: 'string', description: 'Optional: Comma-separated keyword IDs, e.g. to follow up on "those keywords" from a previous result' },
+          ai_search_llm: { type: 'string', enum: [...AI_SEARCH_ENGINES], description: 'Optional: Which engine to read (openai = ChatGPT). Defaults to the campaign\'s active provider' },
+          bucket: { type: 'string', enum: ['both', 'mentioned_not_cited', 'cited_not_mentioned', 'neither', 'any_presence'], description: 'Optional: Return only keywords in this bucket. any_presence means named or cited' },
+          limit: { type: 'integer', description: 'Optional: Max keyword rows per page. Default 25, max 100 (a page may come back smaller to fit the response budget — trust "returned")' },
+          offset: { type: 'integer', description: 'Optional: Row offset for paging. Default 0' },
+          ...DATE_RANGE_SCHEMA,
+        },
+        required: ['campaign_id'],
+      },
+    };
+  }
+
   static getAllDefinitions() {
     return [
       this.getTopKeywordsDefinition(),
@@ -389,6 +412,7 @@ export class CompositeTools {
       this.getCampaignWidgetsDefinition(),
       this.getAiSearchEnginePerformanceDefinition(),
       this.getTopCitedLandingPagesDefinition(),
+      this.getAiSearchPositioningDefinition(),
     ];
   }
 
@@ -827,8 +851,100 @@ export class CompositeTools {
     });
   }
 
+  static async executeGetAiSearchPositioning(args: any, seoClient: SEOMonitorClient) {
+    const { campaign_id } = args;
+    const { startDate, endDate } = dateArgs(args);
+    const limit = clampedNumber(args.limit, 25, 1, 100);
+    const offset = Math.max(0, Math.trunc(Number(args.offset ?? 0)) || 0);
+    const provider = AI_SEARCH_ENGINES.includes(args.ai_search_llm) ? args.ai_search_llm : undefined;
+
+    const [campaigns, rowsRaw] = await Promise.all([
+      safe('campaign', seoClient.getTrackedCampaigns({ campaign_ids: String(campaign_id), limit: 1 })),
+      seoClient.getKeywordAiSearch(campaign_id, {
+        startDate,
+        endDate,
+        groupId: args.group_id,
+        keywordIds: args.keyword_ids,
+        limit: 1000,
+        skipHtml: true,
+        provider,
+      }),
+    ]);
+    const campaignValue: any = campaigns.value;
+    const campaign = Array.isArray(campaignValue) ? campaignValue[0] : campaignValue?.data?.[0];
+    const host = normalizeHost(campaign?.campaign_info?.domain ?? campaign?.domain);
+    const rows = Array.isArray(rowsRaw) ? rowsRaw : [];
+
+    // One row per keyword, collapsing the weekly snapshots: the latest week
+    // carries the current position, but "were we ever named/cited in range"
+    // is the question people actually ask, so keep both.
+    const analysed = rows.map((row: any) => {
+      const weeks = Array.isArray(row?.ai_search_data) ? [...row.ai_search_data] : [];
+      weeks.sort((a: any, b: any) => String(a?.date ?? '').localeCompare(String(b?.date ?? '')));
+      const latest = weeks.length ? weeks[weeks.length - 1] : null;
+      const allCitations = weeks.flatMap((w: any) => (Array.isArray(w?.citations) ? w.citations : []))
+        .filter((url: any) => typeof url === 'string' && /^https?:\/\//i.test(url));
+      const ourUrls = [...new Set(allCitations.filter((url: string) => hostMatches(url, host)))];
+      const competitorDomains = [...new Set(
+        allCitations.filter((url: string) => !hostMatches(url, host)).map((url: string) => normalizeHost(url)).filter(Boolean),
+      )] as string[];
+      const mentionedEver = weeks.some((w: any) => w?.my_brand_present === true);
+      const mentionedLatest = latest?.my_brand_present === true;
+      const cited = ourUrls.length > 0;
+      // rank 100 is the sentinel for "main domain not among the top cited" —
+      // a subdomain of ours can still be in citations at that rank.
+      const rank = typeof latest?.rank === 'number' ? latest.rank : null;
+      const bucket = mentionedEver && cited ? 'both'
+        : mentionedEver ? 'mentioned_not_cited'
+          : cited ? 'cited_not_mentioned'
+            : 'neither';
+      return {
+        keyword: row?.keyword,
+        keyword_id: row?.keyword_id,
+        bucket,
+        mentioned: mentionedEver,
+        mentioned_latest_week: mentionedLatest,
+        cited: cited,
+        main_domain_citation_rank: rank,
+        our_cited_urls: ourUrls.slice(0, 3),
+        competitor_domains_cited: competitorDomains.slice(0, 6),
+        weeks_in_range: weeks.length,
+        latest_week: latest?.date ?? null,
+      };
+    });
+
+    const wanted = args.bucket;
+    const filtered = !wanted ? analysed
+      : wanted === 'any_presence' ? analysed.filter((k) => k.bucket !== 'neither')
+        : analysed.filter((k) => k.bucket === wanted);
+
+    const summary = analysed.reduce((acc: Record<string, number>, k) => {
+      acc[k.bucket] = (acc[k.bucket] ?? 0) + 1;
+      return acc;
+    }, { both: 0, mentioned_not_cited: 0, cited_not_mentioned: 0, neither: 0 });
+
+    const page = filtered.slice(offset, offset + limit);
+    return fitPagedResult((rowsPage: any[]) => ({
+      as_of: { start_date: startDate, end_date: endDate },
+      campaign_domain: host,
+      ai_search_llm: provider ?? 'campaign_active_provider',
+      group_id: args.group_id ?? null,
+      keywords_analysed: analysed.length,
+      bucket_totals: summary,
+      bucket_filter: wanted ?? null,
+      matched: filtered.length,
+      returned: rowsPage.length,
+      offset,
+      has_more: offset + rowsPage.length < filtered.length,
+      note: 'mentioned = the brand was NAMED in the answer. cited = one of our URLs was listed as a source. They are independent: report both columns, never a single presence figure. main_domain_citation_rank 100 means the main domain was not among the top cited sources even when a subdomain URL was, so check our_cited_urls before calling it absent. competitor_domains_cited lists every non-campaign domain cited here, tracked competitor or not.',
+      keywords: rowsPage,
+    }), page);
+  }
+
   static async execute(toolName: string, args: any, seoClient: SEOMonitorClient) {
     switch (toolName) {
+      case 'seomonitor_get_ai_search_positioning':
+        return this.executeGetAiSearchPositioning(args, seoClient);
       case 'seomonitor_get_top_keywords':
         return this.executeGetTopKeywords(args, seoClient);
       case 'seomonitor_find_keywords':
