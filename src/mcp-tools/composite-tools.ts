@@ -598,7 +598,10 @@ export class CompositeTools {
       feature_visibility_breakdown: visLast?.feature_visibility_breakdown ?? null,
       aio_mention_pct: aioLast?.aio_mentions_visibility ?? null,
       ai_search_mention_pct: aisLast?.brand_presence_visibility ?? null,
-      ai_search_engine: provider ?? 'aggregate/default',
+      // Not an aggregate: with no ai_search_engine the API answers for the
+      // campaign's active provider, which is what made these numbers read as
+      // "blended across engines".
+      ai_search_engine: provider ?? 'campaign_active_provider',
       total_keywords: sovValue ? sovValue.total_keywords ?? null : null,
       total_search_volume: sovValue ? sovValue.total_search_volume ?? null : null,
       share_of_voice: sovValue ? {
