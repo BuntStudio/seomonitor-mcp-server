@@ -180,11 +180,43 @@ export class AiSearchTools {
       skipHtml: include_raw_content === true ? false : true,
       provider: ai_search_llm,
     });
+    // The API drops to a bare [] when the campaign has no crawl dates or no
+    // rows in range, and an array has nowhere to carry enablement — which is
+    // exactly when the caller most needs to know the engine isn't tracked here.
+    // Fetch it separately so an empty result is never mistaken for zero
+    // visibility.
+    const rows = Array.isArray(result) ? result : [];
+    let enabledProviders: string[] | null = rows[0]?.ai_search_provider?.enabled_providers ?? null;
+    let activeProvider: string | null = rows[0]?.ai_search_provider?.active_provider ?? null;
+    if (enabledProviders === null) {
+      try {
+        const groups: any = await seoClient.getGroupData(campaign_id, group_id || '0', { startDate: start_date, endDate: end_date });
+        const first = Array.isArray(groups) ? groups[0] : null;
+        enabledProviders = first?.ai_search?.enabled_providers ?? null;
+        // An explicit ai_search_llm IS the provider the rows came from — the
+        // group lookup is unfiltered and would report the campaign default.
+        activeProvider = activeProvider ?? ai_search_llm ?? first?.ai_search?.active_provider ?? null;
+      } catch {
+        // Enablement is context, not the answer — a failure here must not sink the read.
+      }
+    }
+    const requested = ai_search_llm ?? null;
+    const context = {
+      requested_provider: requested,
+      active_provider: activeProvider,
+      enabled_providers: enabledProviders,
+      requested_provider_enabled: requested && Array.isArray(enabledProviders) ? enabledProviders.includes(requested) : null,
+      keywords_returned: rows.length,
+      note: Array.isArray(enabledProviders) && enabledProviders.length === 0
+        ? 'This campaign has no AI Search engine enabled, so there is nothing to report — say that rather than reporting zero visibility.'
+        : 'If requested_provider_enabled is false, this engine is not tracked on this campaign: an empty or low result means untracked, not absent from AI answers.',
+    };
+
     if (include_raw_content !== true) {
-      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      return { content: [{ type: 'text', text: JSON.stringify({ ai_search_provider: context, keywords: rows }, null, 2) }] };
     }
     const { data, omitted } = pruneRawContent(result);
-    return { content: [{ type: 'text', text: JSON.stringify({ records_with_content_omitted: omitted, keywords: data }, null, 2) }] };
+    return { content: [{ type: 'text', text: JSON.stringify({ ai_search_provider: context, records_with_content_omitted: omitted, keywords: data }, null, 2) }] };
   }
 
   static async executeGetKeywordsCompetitionAis(args: any, seoClient: SEOMonitorClient) {
