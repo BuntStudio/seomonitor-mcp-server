@@ -762,6 +762,7 @@ export class SEOMonitorClient {
     orderBy?: string;
     orderDirection?: string;
     search?: string;
+    provider?: string;
   }): Promise<any[]> {
     const params = new URLSearchParams();
     params.append('campaign_id', campaignId.toString());
@@ -776,6 +777,7 @@ export class SEOMonitorClient {
     if (options.orderBy) params.append('order_by', options.orderBy);
     if (options.orderDirection) params.append('order_direction', options.orderDirection);
     if (options.search) params.append('search', options.search);
+    if (options.provider) params.append('ai_search_llm', options.provider);
 
     const response = await this.client.get(`/rank-tracker/v3.0/keywords/competition/ais?${params}`);
     return response.data;
@@ -792,6 +794,7 @@ export class SEOMonitorClient {
     limit?: number;
     offset?: number;
     search?: string;
+    provider?: string;
   }): Promise<any[]> {
     const params = new URLSearchParams();
     params.append('campaign_id', campaignId.toString());
@@ -805,6 +808,7 @@ export class SEOMonitorClient {
     if (options.limit) params.append('limit', options.limit.toString());
     if (options.offset) params.append('offset', options.offset.toString());
     if (options.search) params.append('search', options.search);
+    if (options.provider) params.append('ai_search_llm', options.provider);
 
     const response = await this.client.get(`/rank-tracker/v3.0/keywords/daily-ranks/ais?${params}`);
     return response.data;
