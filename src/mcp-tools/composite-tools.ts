@@ -17,6 +17,7 @@ const DEVICE_VALUES = ['desktop', 'mobile'] as const;
 const TOP_KEYWORD_METRICS = ['volume', 'rank', 'opportunity', 'yoy', 'rank_trend'] as const;
 const DIRECTIONS = ['top', 'bottom'] as const;
 const AI_SEARCH_ENGINES = ['openai', 'gemini', 'perplexity'] as const;
+const FIND_ORDER_FIELDS = ['search_volume', 'rank', 'opportunity', 'keyword'] as const;
 
 function defaultDateRange(): { startDate: string; endDate: string } {
   const end = new Date();
@@ -61,6 +62,20 @@ function compactJson(data: unknown): string {
 
 function textResult(data: unknown) {
   return { content: [{ type: 'text', text: compactJson(data) }] };
+}
+
+// compactJson truncates mid-string, which turns an oversized page into invalid
+// JSON. For a paged result that is worse than a short page: the caller can't
+// read `returned` and its offset arithmetic silently breaks. Drop rows until
+// the payload fits and let the caller page again.
+function fitPagedResult(build: (rows: any[]) => any, rows: any[]) {
+  let page = rows;
+  let payload = build(page);
+  while (page.length > 1 && JSON.stringify(payload).length > MAX_RESULT_LENGTH) {
+    page = page.slice(0, Math.max(1, Math.floor(page.length * 0.8)));
+    payload = build(page);
+  }
+  return textResult(payload);
 }
 
 function normalizeHost(value: string | undefined | null): string | null {
@@ -251,7 +266,7 @@ export class CompositeTools {
       name: 'seomonitor_find_keywords',
       title: 'Find Keywords',
       annotations: { title: 'Find Keywords', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Filter keywords across the entire tracked set and return an exact count plus matched rows. Use for "how many keywords..." and whole-campaign filtered questions where paged results from seomonitor_get_keyword_data would give "first page only" answers.',
+      description: 'Filter keywords across the entire tracked set and return an exact count plus matched rows. Use for "how many keywords..." and whole-campaign filtered questions where paged results from seomonitor_get_keyword_data would give "first page only" answers. Rows come back in a stable order and limit/offset page through the matched set, so advancing offset by "returned" while has_more is true reaches further rows without repeats — no dedup pass needed. Note "returned" can be below the requested limit when a full page would not fit the response budget; trust "returned", not "limit".',
       inputSchema: {
         type: 'object',
         properties: {
@@ -271,8 +286,11 @@ export class CompositeTools {
           in_aio: { type: 'boolean', description: 'Optional: Filter by Google AI Overview brand presence' },
           in_ai_search: { type: 'boolean', description: 'Optional: Filter by AI Search brand presence across ChatGPT/Perplexity/Gemini' },
           group_id: { type: 'string', description: 'Optional: Keyword group ID' },
-          device: { type: 'string', enum: [...DEVICE_VALUES], description: 'Optional: Device for rank/SERP/AIO filters. Default desktop' },
-          limit: { type: 'integer', description: 'Optional: Max matched rows to return. Default 50, max 100' },
+          device: { type: 'string', enum: [...DEVICE_VALUES], description: 'Optional: Device for rank/SERP/AIO filters. Default desktop. The campaign may track this device to a shallower depth than the other — check primary_device and max_tracked_position_desktop/mobile from seomonitor_get_tracked_campaigns before reading a device comparison' },
+          limit: { type: 'integer', description: 'Optional: Max matched rows to return per page. Default 50, max 100' },
+          offset: { type: 'integer', description: 'Optional: Row offset into the matched set. Default 0. Rows come back in a stable order, so advancing offset by "returned" never repeats or skips a keyword. Each call re-scans the campaign, so use it to reach a specific slice or to walk a modest set — for a long listing, narrow with group_id/filters first' },
+          order_by: { type: 'string', enum: [...FIND_ORDER_FIELDS], description: 'Optional: Sort the matched set before paging. Default is by keyword_id (stable, arbitrary)' },
+          order_direction: { type: 'string', enum: ['asc', 'desc'], description: 'Optional: Sort direction for order_by. Default desc. Keywords with no value sort last either way' },
           ...DATE_RANGE_SCHEMA,
         },
         required: ['campaign_id'],
@@ -326,12 +344,12 @@ export class CompositeTools {
       name: 'seomonitor_get_ai_search_engine_performance',
       title: 'Get AI Search Engine Performance',
       annotations: { title: 'Get AI Search Engine Performance', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Compare brand performance across AI Search engines: ChatGPT (openai), Gemini, and Perplexity. Use first for any "ChatGPT vs Gemini vs Perplexity" question. Returns per-engine presence/citation trend summaries when the API supports provider filtering, plus enabled_providers/active_provider hints from groups/data. Read enabled_providers before answering; if only openai is enabled or non-openai rows are identical because provider filtering is unavailable, say this is ChatGPT-only/limited rather than inventing a real engine split.',
+      description: 'Compare brand performance across AI Search engines: ChatGPT (openai), Gemini, and Perplexity. Use first for any "ChatGPT vs Gemini vs Perplexity" question. Returns per-engine presence/citation trend summaries, each row filtered to that engine, plus enabled_providers/active_provider for the campaign. Every row carries an "enabled" flag: report engines with enabled:false as not tracked on this campaign, never as zero/poor visibility.',
       inputSchema: {
         type: 'object',
         properties: {
           campaign_id: { type: 'integer', description: 'Required campaign ID' },
-          engines: { type: 'string', description: 'Optional: Comma-separated engines/providers to compare. Default: openai,gemini,perplexity. Use openai for ChatGPT' },
+          engines: { type: 'string', description: 'Optional: Comma-separated engines to compare, from openai, gemini, perplexity only. Default: all three. Use openai for ChatGPT; any other name is rejected, not guessed' },
           group_id: { type: 'string', description: 'Optional: Keyword group ID. Use 0 for all keywords. Defaults to 0' },
           ...DATE_RANGE_SCHEMA,
         },
@@ -363,6 +381,29 @@ export class CompositeTools {
     };
   }
 
+  static getAiSearchPositioningDefinition() {
+    return {
+      name: 'seomonitor_get_ai_search_positioning',
+      title: 'Get AI Search Positioning',
+      annotations: { title: 'Get AI Search Positioning', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      description: 'The honest per-keyword AI Search picture in one call: for each keyword, was the brand NAMED in the answer, was one of our URLs CITED as a source, at what citation rank, and which competitor domains were cited alongside. Use this for "how are we positioned in AI Search", "are we mentioned or just cited", "who is cited instead of us". Naming and citing diverge constantly, so each keyword is bucketed as both / mentioned_not_cited / cited_not_mentioned / neither — never collapse them into one presence number. Does not return the answer text; use seomonitor_get_keyword_ai_search_data with include_raw_content for that.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          campaign_id: { type: 'integer', description: 'Required campaign ID' },
+          group_id: { type: 'string', description: 'Optional: Keyword group ID. Scope to a group — most keywords are absent from AI answers, so a whole-campaign pull is mostly empty rows' },
+          keyword_ids: { type: 'string', description: 'Optional: Comma-separated keyword IDs, e.g. to follow up on "those keywords" from a previous result' },
+          ai_search_llm: { type: 'string', enum: [...AI_SEARCH_ENGINES], description: 'Optional: Which engine to read (openai = ChatGPT). Defaults to the campaign\'s active provider' },
+          bucket: { type: 'string', enum: ['both', 'mentioned_not_cited', 'cited_not_mentioned', 'neither', 'any_presence'], description: 'Optional: Return only keywords in this bucket. any_presence means named or cited' },
+          limit: { type: 'integer', description: 'Optional: Max keyword rows per page. Default 25, max 100 (a page may come back smaller to fit the response budget — trust "returned")' },
+          offset: { type: 'integer', description: 'Optional: Row offset for paging. Default 0' },
+          ...DATE_RANGE_SCHEMA,
+        },
+        required: ['campaign_id'],
+      },
+    };
+  }
+
   static getAllDefinitions() {
     return [
       this.getTopKeywordsDefinition(),
@@ -371,6 +412,7 @@ export class CompositeTools {
       this.getCampaignWidgetsDefinition(),
       this.getAiSearchEnginePerformanceDefinition(),
       this.getTopCitedLandingPagesDefinition(),
+      this.getAiSearchPositioningDefinition(),
     ];
   }
 
@@ -480,7 +522,38 @@ export class CompositeTools {
       return true;
     });
 
-    const keywords = matched.slice(0, limit).map((k: any) => ({
+    // The whole matched set is already in memory, so page it here rather than
+    // making the caller re-run the scan. keyword_id breaks ties (and is the
+    // fallback order) so successive offsets can never overlap or skip a row.
+    const orderBy = FIND_ORDER_FIELDS.includes(args.order_by) ? args.order_by : null;
+    const descending = String(args.order_direction ?? 'desc').toLowerCase() !== 'asc';
+    const sortKey = (k: any) => {
+      if (orderBy === 'search_volume') return k.search_data?.search_volume ?? null;
+      if (orderBy === 'rank') return k.ranking_data?.[device]?.rank ?? null;
+      if (orderBy === 'opportunity') return k.opportunity ?? null;
+      if (orderBy === 'keyword') return k.keyword ?? null;
+      return null;
+    };
+    if (orderBy) {
+      matched.sort((a: any, b: any) => {
+        const x = sortKey(a);
+        const y = sortKey(b);
+        // Nulls last regardless of direction — an unranked keyword is not "best".
+        if (x == null && y == null) return Number(a.keyword_id) - Number(b.keyword_id);
+        if (x == null) return 1;
+        if (y == null) return -1;
+        const cmp = typeof x === 'string' || typeof y === 'string'
+          ? String(x).localeCompare(String(y))
+          : Number(x) - Number(y);
+        if (cmp !== 0) return descending ? -cmp : cmp;
+        return Number(a.keyword_id) - Number(b.keyword_id);
+      });
+    } else {
+      matched.sort((a: any, b: any) => Number(a.keyword_id) - Number(b.keyword_id));
+    }
+
+    const offset = Math.max(0, Math.trunc(Number(args.offset ?? 0)) || 0);
+    const keywords = matched.slice(offset, offset + limit).map((k: any) => ({
       keyword: k.keyword,
       keyword_id: k.keyword_id,
       intent: k.search_intent ?? null,
@@ -488,7 +561,6 @@ export class CompositeTools {
       mobile_rank: k.ranking_data?.mobile?.rank ?? null,
       search_volume: k.search_data?.search_volume ?? null,
       opportunity: k.opportunity ?? null,
-      rank_band: rankBand,
       brand: keywordBrandFlag(k) ?? null,
       aio_presence: hasAioPresence(k, device),
       ais_presence: k.ai_search?.any_brand_presence ?? k.ai_search?.my_brand_presence ?? null,
@@ -496,7 +568,7 @@ export class CompositeTools {
       in_ai_search: k.ai_search?.any_brand_presence ?? null,
     }));
 
-    return textResult({
+    return fitPagedResult((page: any[]) => ({
       filters: {
         intent,
         rank_max: rankMax,
@@ -517,11 +589,15 @@ export class CompositeTools {
       },
       total_scanned: rows.length,
       total_matched: matched.length,
-      returned: keywords.length,
+      returned: page.length,
+      offset,
+      order_by: orderBy ?? 'keyword_id',
+      order_direction: orderBy ? (descending ? 'desc' : 'asc') : 'asc',
+      has_more: offset + page.length < matched.length,
       complete,
-      note: `Scanned ${rows.length} tracked keywords. A rank of ${capRank === -Infinity ? 'n/a' : capRank} is treated as not ranking.`,
-      keywords,
-    });
+      note: `Scanned ${rows.length} tracked keywords; ${matched.length} matched. Ranks are ${device} — check the campaign's primary_device and max_tracked_position_* from seomonitor_get_tracked_campaigns before comparing devices, because the secondary device is often tracked to a shallower depth. A rank of ${capRank === -Infinity ? 'n/a' : capRank} is treated as not ranking. To list every match, repeat this call with offset advanced by "returned" (which may be smaller than limit when a page would not fit the response budget) until has_more is false.`,
+      keywords: page,
+    }), keywords);
   }
 
   static async executeGetTopAiSearchKeywords(args: any, seoClient: SEOMonitorClient) {
@@ -598,7 +674,10 @@ export class CompositeTools {
       feature_visibility_breakdown: visLast?.feature_visibility_breakdown ?? null,
       aio_mention_pct: aioLast?.aio_mentions_visibility ?? null,
       ai_search_mention_pct: aisLast?.brand_presence_visibility ?? null,
-      ai_search_engine: provider ?? 'aggregate/default',
+      // Not an aggregate: with no ai_search_engine the API answers for the
+      // campaign's active provider, which is what made these numbers read as
+      // "blended across engines".
+      ai_search_engine: provider ?? 'campaign_active_provider',
       total_keywords: sovValue ? sovValue.total_keywords ?? null : null,
       total_search_volume: sovValue ? sovValue.total_search_volume ?? null : null,
       share_of_voice: sovValue ? {
@@ -616,17 +695,37 @@ export class CompositeTools {
     const { campaign_id } = args;
     const { startDate, endDate } = dateArgs(args);
     const groupId: string = args.group_id || '0';
-    const engines: string[] = (args.engines || 'openai,gemini,perplexity')
+    // An ai_search_llm the API can't parse is NOT rejected — it silently falls
+    // back to the campaign's active provider, so "chatgpt" or a typo would come
+    // back carrying another engine's numbers under the wrong label. Resolve the
+    // one safe alias and refuse the rest rather than querying them.
+    const requestedEngines: string[] = (args.engines || AI_SEARCH_ENGINES.join(','))
       .split(',')
-      .map((engine: string) => engine.trim())
-      .filter(Boolean);
+      .map((engine: string) => engine.trim().toLowerCase())
+      .filter(Boolean)
+      .map((engine: string) => (engine === 'chatgpt' ? 'openai' : engine));
+    const engines = [...new Set(requestedEngines.filter((e) => AI_SEARCH_ENGINES.includes(e as any)))];
+    const ignoredEngines = [...new Set(requestedEngines.filter((e) => !AI_SEARCH_ENGINES.includes(e as any)))];
+    if (!engines.length) {
+      throw new Error(`No recognised AI Search engine in "${args.engines}". Valid engines: ${AI_SEARCH_ENGINES.join(', ')} (use openai for ChatGPT).`);
+    }
     const last = (arr: any) => Array.isArray(arr) && arr.length ? arr[arr.length - 1] : null;
 
     const groupData = await safe('group_data', seoClient.getGroupData(campaign_id, groupId, { startDate, endDate }));
+    const groupFirstForProviders: any = Array.isArray(groupData.value) ? groupData.value[0] : null;
+    const enabledProviders: string[] | null = groupFirstForProviders?.ai_search?.enabled_providers ?? null;
+    // The API honours ai_search_llm even for a provider the campaign never
+    // enabled — it returns empty rows rather than an error. Without this flag a
+    // zero reads as "no visibility on Perplexity" instead of "Perplexity isn't
+    // tracked here".
+    const isEnabled = (engine: string): boolean | null => (
+      Array.isArray(enabledProviders) ? enabledProviders.includes(engine) : null
+    );
+
     const engineRows = await Promise.all(engines.map(async (engine) => {
       const [mentions, citations] = await Promise.all([
-        safe(`${engine}_mentions`, seoClient.getDailyGroupAisMentions(campaign_id, { startDate, endDate, groupId, provider: engine, engine })),
-        safe(`${engine}_citations`, seoClient.getDailyGroupAisCitations(campaign_id, { startDate, endDate, groupId, provider: engine, engine })),
+        safe(`${engine}_mentions`, seoClient.getDailyGroupAisMentions(campaign_id, { startDate, endDate, groupId, provider: engine })),
+        safe(`${engine}_citations`, seoClient.getDailyGroupAisCitations(campaign_id, { startDate, endDate, groupId, provider: engine })),
       ]);
       const mentionRows = mentions.value;
       const citationRows = citations.value;
@@ -634,6 +733,7 @@ export class CompositeTools {
       const citationLast = last(citationRows);
       return {
         engine,
+        enabled: isEnabled(engine),
         brand_presence_latest: mentionLast?.brand_presence_visibility ?? null,
         source_citation_latest: citationLast?.source_citation_visibility ?? citationLast?.citation_visibility ?? null,
         mentions_points: Array.isArray(mentionRows) ? mentionRows.length : 0,
@@ -642,14 +742,13 @@ export class CompositeTools {
       };
     }));
 
-    const groupValue: any = groupData.value;
-    const groupFirst = Array.isArray(groupValue) ? groupValue[0] : null;
     return textResult({
       as_of: { start_date: startDate, end_date: endDate },
       group_id: groupId,
-      enabled_providers: groupFirst?.ai_search?.enabled_providers ?? null,
-      active_provider: groupFirst?.ai_search?.active_provider ?? null,
-      note: 'openai maps to ChatGPT. If all engines return identical values while enabled_providers has one item, the upstream account may only have one provider enabled or may ignore provider filters.',
+      enabled_providers: enabledProviders,
+      active_provider: groupFirstForProviders?.ai_search?.active_provider ?? null,
+      ignored_engines: ignoredEngines.length ? ignoredEngines : undefined,
+      note: 'openai maps to ChatGPT. Each engine row is filtered to that engine, so the numbers are genuinely per-engine, not blended. Read "enabled" first: enabled:false means the campaign does not track that engine, so whatever it reports is residual, not a live signal — say the engine is not tracked instead of reporting it as weak performance. enabled:null means the enablement list could not be read. Any name in ignored_engines was not queried at all.',
       engines: engineRows,
       errors: groupData.error ? { group_data: String(groupData.error) } : undefined,
     });
@@ -752,8 +851,100 @@ export class CompositeTools {
     });
   }
 
+  static async executeGetAiSearchPositioning(args: any, seoClient: SEOMonitorClient) {
+    const { campaign_id } = args;
+    const { startDate, endDate } = dateArgs(args);
+    const limit = clampedNumber(args.limit, 25, 1, 100);
+    const offset = Math.max(0, Math.trunc(Number(args.offset ?? 0)) || 0);
+    const provider = AI_SEARCH_ENGINES.includes(args.ai_search_llm) ? args.ai_search_llm : undefined;
+
+    const [campaigns, rowsRaw] = await Promise.all([
+      safe('campaign', seoClient.getTrackedCampaigns({ campaign_ids: String(campaign_id), limit: 1 })),
+      seoClient.getKeywordAiSearch(campaign_id, {
+        startDate,
+        endDate,
+        groupId: args.group_id,
+        keywordIds: args.keyword_ids,
+        limit: 1000,
+        skipHtml: true,
+        provider,
+      }),
+    ]);
+    const campaignValue: any = campaigns.value;
+    const campaign = Array.isArray(campaignValue) ? campaignValue[0] : campaignValue?.data?.[0];
+    const host = normalizeHost(campaign?.campaign_info?.domain ?? campaign?.domain);
+    const rows = Array.isArray(rowsRaw) ? rowsRaw : [];
+
+    // One row per keyword, collapsing the weekly snapshots: the latest week
+    // carries the current position, but "were we ever named/cited in range"
+    // is the question people actually ask, so keep both.
+    const analysed = rows.map((row: any) => {
+      const weeks = Array.isArray(row?.ai_search_data) ? [...row.ai_search_data] : [];
+      weeks.sort((a: any, b: any) => String(a?.date ?? '').localeCompare(String(b?.date ?? '')));
+      const latest = weeks.length ? weeks[weeks.length - 1] : null;
+      const allCitations = weeks.flatMap((w: any) => (Array.isArray(w?.citations) ? w.citations : []))
+        .filter((url: any) => typeof url === 'string' && /^https?:\/\//i.test(url));
+      const ourUrls = [...new Set(allCitations.filter((url: string) => hostMatches(url, host)))];
+      const competitorDomains = [...new Set(
+        allCitations.filter((url: string) => !hostMatches(url, host)).map((url: string) => normalizeHost(url)).filter(Boolean),
+      )] as string[];
+      const mentionedEver = weeks.some((w: any) => w?.my_brand_present === true);
+      const mentionedLatest = latest?.my_brand_present === true;
+      const cited = ourUrls.length > 0;
+      // rank 100 is the sentinel for "main domain not among the top cited" —
+      // a subdomain of ours can still be in citations at that rank.
+      const rank = typeof latest?.rank === 'number' ? latest.rank : null;
+      const bucket = mentionedEver && cited ? 'both'
+        : mentionedEver ? 'mentioned_not_cited'
+          : cited ? 'cited_not_mentioned'
+            : 'neither';
+      return {
+        keyword: row?.keyword,
+        keyword_id: row?.keyword_id,
+        bucket,
+        mentioned: mentionedEver,
+        mentioned_latest_week: mentionedLatest,
+        cited: cited,
+        main_domain_citation_rank: rank,
+        our_cited_urls: ourUrls.slice(0, 3),
+        competitor_domains_cited: competitorDomains.slice(0, 6),
+        weeks_in_range: weeks.length,
+        latest_week: latest?.date ?? null,
+      };
+    });
+
+    const wanted = args.bucket;
+    const filtered = !wanted ? analysed
+      : wanted === 'any_presence' ? analysed.filter((k) => k.bucket !== 'neither')
+        : analysed.filter((k) => k.bucket === wanted);
+
+    const summary = analysed.reduce((acc: Record<string, number>, k) => {
+      acc[k.bucket] = (acc[k.bucket] ?? 0) + 1;
+      return acc;
+    }, { both: 0, mentioned_not_cited: 0, cited_not_mentioned: 0, neither: 0 });
+
+    const page = filtered.slice(offset, offset + limit);
+    return fitPagedResult((rowsPage: any[]) => ({
+      as_of: { start_date: startDate, end_date: endDate },
+      campaign_domain: host,
+      ai_search_llm: provider ?? 'campaign_active_provider',
+      group_id: args.group_id ?? null,
+      keywords_analysed: analysed.length,
+      bucket_totals: summary,
+      bucket_filter: wanted ?? null,
+      matched: filtered.length,
+      returned: rowsPage.length,
+      offset,
+      has_more: offset + rowsPage.length < filtered.length,
+      note: 'mentioned = the brand was NAMED in the answer. cited = one of our URLs was listed as a source. They are independent: report both columns, never a single presence figure. main_domain_citation_rank 100 means the main domain was not among the top cited sources even when a subdomain URL was, so check our_cited_urls before calling it absent. competitor_domains_cited lists every non-campaign domain cited here, tracked competitor or not.',
+      keywords: rowsPage,
+    }), page);
+  }
+
   static async execute(toolName: string, args: any, seoClient: SEOMonitorClient) {
     switch (toolName) {
+      case 'seomonitor_get_ai_search_positioning':
+        return this.executeGetAiSearchPositioning(args, seoClient);
       case 'seomonitor_get_top_keywords':
         return this.executeGetTopKeywords(args, seoClient);
       case 'seomonitor_find_keywords':
