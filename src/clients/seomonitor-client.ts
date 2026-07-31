@@ -107,6 +107,26 @@ export class SEOMonitorClient {
           message: error.message,
           data: error.response?.data
         });
+        // Axios stringifies to "Request failed with status code 403", which tells
+        // the caller nothing actionable. The API explains itself in the body
+        // ("Permission Denied" vs "Draft campaign detected" vs a 422 field list)
+        // and that explanation was being logged and then discarded. Keep
+        // .response attached — call sites branch on e.response.status.
+        const status = error.response?.status;
+        const apiError = error.response?.data?.error;
+        const apiMessage = typeof apiError?.message === 'string' ? apiError.message : null;
+        if (status && apiMessage) {
+          const rawDetails = apiError?.details;
+          const details = Array.isArray(rawDetails)
+            ? rawDetails.filter((d: any) => typeof d === 'string').join('; ')
+            : (typeof rawDetails === 'string' ? rawDetails : '');
+          const enriched: any = new Error(
+            `SEOmonitor API returned HTTP ${status}: ${apiMessage}${details ? ` — ${details}` : ''}`,
+          );
+          enriched.response = error.response;
+          enriched.status = status;
+          throw enriched;
+        }
         throw error;
       }
     );
