@@ -273,8 +273,23 @@ export class ResearchTools {
   /**
    * Execute get_domain_overview tool
    */
+  // A client holding a cached copy of the old tool definition still sends
+  // domain + country_code, so campaign_id arrives undefined and the client
+  // method fails on .toString() — "Cannot read properties of undefined", which
+  // reads as a broken server rather than a stale connector. Say what is missing.
+  private static requireDomainArgs(args: any, tool: string) {
+    const missing = ['campaign_id', 'url'].filter((name) => args?.[name] === undefined || args?.[name] === null || args?.[name] === '');
+    if (missing.length) {
+      throw new Error(
+        `${tool} requires ${missing.join(' and ')}. It takes campaign_id (the market to read the domain in) and url (the domain, e.g. nike.com) — not domain/country_code. ` +
+        `If your client is sending domain or country_code, it is using an outdated tool list: reconnect the SEOmonitor connector to refresh it.`,
+      );
+    }
+  }
+
   static async executeGetDomainOverview(args: any, seoClient: SEOMonitorClient) {
     const { campaign_id, url, gap_analysis } = args;
+    this.requireDomainArgs(args, 'seomonitor_get_domain_overview');
 
     const result = await seoClient.getDomainOverview(campaign_id, url, {
       gapAnalysis: gap_analysis,
@@ -295,6 +310,7 @@ export class ResearchTools {
    */
   static async executeGetDomainRankingKeywords(args: any, seoClient: SEOMonitorClient) {
     const { campaign_id, url, gap_analysis, limit, offset, order_by, order_direction, search } = args;
+    this.requireDomainArgs(args, 'seomonitor_get_domain_ranking_keywords');
 
     const result = await seoClient.getRankingKeywords(campaign_id, url, {
       gapAnalysis: gap_analysis,
