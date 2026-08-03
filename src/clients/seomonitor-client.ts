@@ -68,6 +68,19 @@ export class SEOMonitorClient {
         'Accept': 'application/json',
       },
       timeout: resolvedTimeout,
+      // Every list this API takes — campaign_ids, keywords, domains — is
+      // comma-separated. Axios defaults to campaign_ids[]=1&campaign_ids[]=2,
+      // which the API does not recognise and answers with a 500, so any tool
+      // declaring an array parameter fails while the same call with a
+      // pre-joined string succeeds.
+      paramsSerializer: (params: Record<string, any>) => {
+        const query = new URLSearchParams();
+        for (const [key, value] of Object.entries(params ?? {})) {
+          if (value === undefined || value === null) continue;
+          query.append(key, Array.isArray(value) ? value.join(',') : String(value));
+        }
+        return query.toString();
+      },
     });
     
     this.logger.info('SEOMonitor client initialized', { httpTimeoutMs: resolvedTimeout });
