@@ -232,10 +232,10 @@ async function fetchAllKeywords(
 
 // Wrap a widget sub-request so one failing endpoint degrades that widget
 // instead of failing the whole overview call.
-function safe(label: string, p: Promise<any>): Promise<{ label: string; value?: any; error?: string }> {
+function safe(label: string, p: Promise<any>): Promise<{ label: string; value?: any; error?: string; status?: number }> {
   return p
     .then((value) => ({ label, value }))
-    .catch((e: any) => ({ label, error: String(e?.response?.status || e?.message || 'failed') }));
+    .catch((e: any) => ({ label, error: String(e?.response?.status || e?.message || 'failed'), status: e?.response?.status }));
 }
 
 export class CompositeTools {
@@ -344,7 +344,7 @@ export class CompositeTools {
       name: 'seomonitor_get_ai_search_engine_performance',
       title: 'Get AI Search Engine Performance',
       annotations: { title: 'Get AI Search Engine Performance', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Compare brand performance across AI Search engines: ChatGPT (openai), Gemini, and Perplexity. Use first for any "ChatGPT vs Gemini vs Perplexity" question. Returns per-engine presence/citation trend summaries, each row filtered to that engine, plus enabled_providers/active_provider for the campaign. Every row carries an "enabled" flag: report engines with enabled:false as not tracked on this campaign, never as zero/poor visibility.',
+      description: 'Compare brand performance across AI Search engines: ChatGPT (openai), Gemini, and Perplexity. Use first for any "ChatGPT vs Gemini vs Perplexity" question. Returns per-engine presence/citation trend summaries, each row filtered to that engine, plus enabled_providers/active_provider for the campaign. Every row carries an "enabled" flag: report engines with enabled:false as not tracked on this campaign, never as zero/poor visibility. Every row also carries "access": on access:not_entitled the account cannot read this engine at group level, so that row is empty for a reason unrelated to visibility — retry that engine with seomonitor_get_ai_search_positioning or seomonitor_get_keyword_ai_search_data (passing ai_search_llm), which are gated separately, before reporting anything about it.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -731,16 +731,27 @@ export class CompositeTools {
       const citationRows = citations.value;
       const mentionLast = last(mentionRows);
       const citationLast = last(citationRows);
+      const failures = [mentions, citations].filter((r) => r.error);
+      // A 403 is an entitlement boundary, not an empty result. These group-level
+      // endpoints are gated separately from the per-keyword ones, so the account
+      // can be barred here and still able to read the same engine keyword by
+      // keyword. Unflagged, the row is indistinguishable from real zero visibility.
+      const access = failures.some((r) => r.status === 403)
+        ? 'not_entitled'
+        : (failures.length ? 'error' : 'ok');
       return {
         engine,
         enabled: isEnabled(engine),
+        access,
         brand_presence_latest: mentionLast?.brand_presence_visibility ?? null,
         source_citation_latest: citationLast?.source_citation_visibility ?? citationLast?.citation_visibility ?? null,
         mentions_points: Array.isArray(mentionRows) ? mentionRows.length : 0,
         citations_points: Array.isArray(citationRows) ? citationRows.length : 0,
-        errors: [mentions, citations].filter((r) => r.error).reduce((acc: Record<string, string>, r) => ({ ...acc, [r.label]: String(r.error) }), {}),
+        errors: failures.reduce((acc: Record<string, string>, r) => ({ ...acc, [r.label]: String(r.error) }), {}),
       };
     }));
+
+    const blockedEngines = engineRows.filter((row) => row.access === 'not_entitled').map((row) => row.engine);
 
     return textResult({
       as_of: { start_date: startDate, end_date: endDate },
@@ -748,7 +759,10 @@ export class CompositeTools {
       enabled_providers: enabledProviders,
       active_provider: groupFirstForProviders?.ai_search?.active_provider ?? null,
       ignored_engines: ignoredEngines.length ? ignoredEngines : undefined,
-      note: 'openai maps to ChatGPT. Each engine row is filtered to that engine, so the numbers are genuinely per-engine, not blended. Read "enabled" first: enabled:false means the campaign does not track that engine, so whatever it reports is residual, not a live signal — say the engine is not tracked instead of reporting it as weak performance. enabled:null means the enablement list could not be read. Any name in ignored_engines was not queried at all.',
+      note: 'openai maps to ChatGPT. Each engine row is filtered to that engine, so the numbers are genuinely per-engine, not blended. Read "enabled" first: enabled:false means the campaign does not track that engine, so whatever it reports is residual, not a live signal — say the engine is not tracked instead of reporting it as weak performance. enabled:null means the enablement list could not be read. Then read "access": ok means the numbers are real; not_entitled means this account cannot read the group-level figures for that engine, so its nulls and zeros carry no information — do not report them as visibility of any kind; error means the call failed for another reason, see that row\'s errors. Any name in ignored_engines was not queried at all.',
+      retry_not_entitled_with: blockedEngines.length
+        ? { engines: blockedEngines, tools: ['seomonitor_get_ai_search_positioning', 'seomonitor_get_keyword_ai_search_data'], how: 'Call one of these per blocked engine with ai_search_llm set to that engine. They are gated separately from the group-level endpoints, so they often return data when this tool cannot. Only after they also fail should you tell the user the figures are unavailable for that engine.' }
+        : undefined,
       engines: engineRows,
       errors: groupData.error ? { group_data: String(groupData.error) } : undefined,
     });
