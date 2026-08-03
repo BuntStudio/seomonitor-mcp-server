@@ -81,28 +81,25 @@ export class ResearchTools {
       name: 'seomonitor_get_domain_overview',
       title: 'Get Domain Overview',
       annotations: { title: 'Get Domain Overview', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Domain SEO overview and metrics',
+      description: 'SEO overview for any domain — ranking keyword count, search volume and year-over-year trend — read against one of your campaigns. The campaign supplies the market, so there is no country or language to pass; use a campaign tracking the market you care about.',
       inputSchema: {
         type: 'object',
         properties: {
-          domain: {
-            type: 'string',
-            description: 'Target domain (without protocol)',
-          },
-          country_code: {
-            type: 'string',
-            description: 'Country code (e.g., US, GB, DE)',
-          },
-          language_code: {
-            type: 'string',
-            description: 'Optional: Language code (e.g., en, de, fr)',
-          },
           campaign_id: {
+            type: 'integer',
+            description: 'Required campaign ID. Supplies the market the domain is read in',
+          },
+          url: {
             type: 'string',
-            description: 'Optional: Campaign context for comparison',
+            description: 'Required domain or URL to look up, without protocol (e.g. nike.com)',
+          },
+          gap_analysis: {
+            type: 'string',
+            enum: ['all-keywords', 'overlapping', 'non-overlapping'],
+            description: 'Optional: restrict to keywords the campaign also ranks for (overlapping) or does not (non-overlapping). Default all-keywords',
           },
         },
-        required: ['domain', 'country_code'],
+        required: ['campaign_id', 'url'],
       },
     };
   }
@@ -115,32 +112,47 @@ export class ResearchTools {
       name: 'seomonitor_get_domain_ranking_keywords',
       title: 'Get Domain Ranking Keywords',
       annotations: { title: 'Get Domain Ranking Keywords', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Keywords a domain ranks for',
+      description: 'The keywords any domain ranks for, read against one of your campaigns. The campaign supplies the market, so there is no country or language to pass. Use gap_analysis to answer competitor-gap questions: overlapping for keywords you both rank for, non-overlapping for the ones only they have.',
       inputSchema: {
         type: 'object',
         properties: {
-          domain: {
-            type: 'string',
-            description: 'Target domain (without protocol)',
+          campaign_id: {
+            type: 'integer',
+            description: 'Required campaign ID. Supplies the market the domain is read in',
           },
-          country_code: {
+          url: {
             type: 'string',
-            description: 'Country code (e.g., US, GB, DE)',
+            description: 'Required domain or URL to look up, without protocol (e.g. nike.com)',
           },
-          language_code: {
+          gap_analysis: {
             type: 'string',
-            description: 'Optional: Language code (e.g., en, de, fr)',
+            enum: ['all-keywords', 'overlapping', 'non-overlapping'],
+            description: 'Optional: overlapping = keywords the campaign ranks for too, non-overlapping = only this domain. Default all-keywords',
           },
           limit: {
             type: 'number',
-            description: 'Optional: Results limit',
+            description: 'Optional: Results limit, max 1000. Default is the API default',
           },
           offset: {
             type: 'number',
             description: 'Optional: Pagination offset',
           },
+          order_by: {
+            type: 'string',
+            enum: ['search_volume', 'year-over-year', 'rank', 'rank_trend', 'my_rank', 'my_rank_trend', 'percentage_clicks'],
+            description: 'Optional: sort field. my_rank/my_rank_trend refer to the campaign, rank/rank_trend to the looked-up domain',
+          },
+          order_direction: {
+            type: 'string',
+            enum: ['asc', 'desc'],
+            description: 'Optional: sort direction',
+          },
+          search: {
+            type: 'string',
+            description: 'Optional: substring filter on the keyword',
+          },
         },
-        required: ['domain', 'country_code'],
+        required: ['campaign_id', 'url'],
       },
     };
   }
@@ -212,7 +224,7 @@ export class ResearchTools {
             description: 'Optional: Pagination offset',
           },
         },
-        required: ['campaign_id', 'keywords'],
+        required: ['campaign_id', 'keywords', 'domains'],
       },
     };
   }
@@ -262,11 +274,10 @@ export class ResearchTools {
    * Execute get_domain_overview tool
    */
   static async executeGetDomainOverview(args: any, seoClient: SEOMonitorClient) {
-    const { domain, country_code, language_code } = args;
+    const { campaign_id, url, gap_analysis } = args;
 
-    const result = await seoClient.getDomainOverview(domain, {
-      country: country_code,
-      language: language_code,
+    const result = await seoClient.getDomainOverview(campaign_id, url, {
+      gapAnalysis: gap_analysis,
     });
 
     return {
@@ -283,13 +294,15 @@ export class ResearchTools {
    * Execute get_domain_ranking_keywords tool
    */
   static async executeGetDomainRankingKeywords(args: any, seoClient: SEOMonitorClient) {
-    const { domain, country_code, language_code, limit, offset } = args;
+    const { campaign_id, url, gap_analysis, limit, offset, order_by, order_direction, search } = args;
 
-    const result = await seoClient.getRankingKeywords(domain, {
-      country: country_code,
-      language: language_code,
+    const result = await seoClient.getRankingKeywords(campaign_id, url, {
+      gapAnalysis: gap_analysis,
       limit,
       offset,
+      orderBy: order_by,
+      orderDirection: order_direction,
+      search,
     });
 
     return {
