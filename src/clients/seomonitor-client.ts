@@ -438,36 +438,41 @@ export class SEOMonitorClient {
     return response.data;
   }
 
-  async getDomainOverview(domain: string, options?: {
-    country?: string;
-    language?: string;
+  // Both domain endpoints are campaign-scoped: the route carries
+  // user.access.to.site.using.jwt, and the market comes from the campaign — there
+  // is no country or language parameter. They also read `url`, not `domain`.
+  async getDomainOverview(campaignId: number, url: string, options?: {
+    gapAnalysis?: string;
   }): Promise<any> {
     const params = new URLSearchParams();
-    params.append('domain', domain);
-    
-    if (options?.country) params.append('country', options.country);
-    if (options?.language) params.append('language', options.language);
+    params.append('campaign_id', campaignId.toString());
+    params.append('url', url);
 
-    // Align with OpenAPI: /v3/research/v3.0/domain-overview (baseURL already includes /v3)
+    if (options?.gapAnalysis) params.append('gap_analysis', options.gapAnalysis);
+
     const response = await this.client.get(`/research/v3.0/domain-overview?${params}`);
     return response.data;
   }
 
-  async getRankingKeywords(domain: string, options?: {
-    country?: string;
-    language?: string;
+  async getRankingKeywords(campaignId: number, url: string, options?: {
+    gapAnalysis?: string;
     limit?: number;
     offset?: number;
+    orderBy?: string;
+    orderDirection?: string;
+    search?: string;
   }): Promise<any[]> {
     const params = new URLSearchParams();
-    params.append('domain', domain);
-    
-    if (options?.country) params.append('country', options.country);
-    if (options?.language) params.append('language', options.language);
+    params.append('campaign_id', campaignId.toString());
+    params.append('url', url);
+
+    if (options?.gapAnalysis) params.append('gap_analysis', options.gapAnalysis);
     if (options?.limit) params.append('limit', options.limit.toString());
     if (options?.offset) params.append('offset', options.offset.toString());
+    if (options?.orderBy) params.append('order_by', options.orderBy);
+    if (options?.orderDirection) params.append('order_direction', options.orderDirection);
+    if (options?.search) params.append('search', options.search);
 
-    // Align with OpenAPI: /v3/research/v3.0/domain-ranking-keywords (baseURL already includes /v3)
     const response = await this.client.get(`/research/v3.0/domain-ranking-keywords?${params}`);
     return response.data;
   }
