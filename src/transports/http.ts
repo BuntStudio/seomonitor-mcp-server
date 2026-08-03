@@ -67,13 +67,22 @@ export class HttpTransport {
     });
 
     // RFC 9728 protected-resource metadata: points OAuth-capable MCP clients
-    // (Claude, ChatGPT) at the authorization server. Key-in-URL connectors are
-    // unaffected. Clients probe both the root and path-suffixed well-known URI.
+    // (Claude, ChatGPT) at the authorization server.
     //
-    // The resource identity is the bare host — the published connect URL. The
-    // /mcp alias serves the same metadata so connectors on the old URL keep
-    // working; nothing downstream reads the value (the access token carries no
-    // audience claim), so both forms resolve to the same server either way.
+    // Served ONLY at the /mcp-suffixed URI, never at the root. A client probes
+    // /.well-known/oauth-protected-resource<its own path> and, on 404, retries
+    // at the root — so a root document is handed to every path on this origin,
+    // including the published key-in-URL connector /{API_KEY}/mcp. That URL
+    // authenticates itself and must never be diverted into an OAuth sign-in.
+    // Its probe 404s at both URIs, which is what keeps it silent.
+    //
+    // The bare host has no probe URI of its own (its path-aware probe IS the
+    // root), so it advertises OAuth the way the spec requires instead: an
+    // unauthenticated POST gets 401 + WWW-Authenticate carrying the pointer
+    // below. Gemini CLI's dynamic_discovery already follows that path.
+    //
+    // resource stays the bare host: clients check it is a prefix of the URL
+    // they connected to, and every surface here is under it.
     const publicUrl = (process.env.MCP_PUBLIC_URL || 'https://mcp.seomonitor.com').replace(/\/$/, '');
     const authServerUrl = (process.env.MCP_AUTH_SERVER_URL || 'https://auth.seomonitor.com').replace(/\/$/, '');
     const resourceMetadata = (_req: Request, res: Response) => {
@@ -83,10 +92,9 @@ export class HttpTransport {
         bearer_methods_supported: ['header'],
       });
     };
-    app.get('/.well-known/oauth-protected-resource', resourceMetadata);
     app.get('/.well-known/oauth-protected-resource/mcp', resourceMetadata);
 
-    const resourceMetadataUrl = `${publicUrl}/.well-known/oauth-protected-resource`;
+    const resourceMetadataUrl = `${publicUrl}/.well-known/oauth-protected-resource/mcp`;
 
     const handleMcpPost = async (req: Request, res: Response) => {
       const apiKey = extractApiKey(req);
