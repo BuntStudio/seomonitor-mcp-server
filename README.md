@@ -30,7 +30,7 @@ Both forms hit the same server; use whichever your client supports. Rate limit: 
 ```bash
 gemini extensions install https://github.com/BuntStudio/seomonitor-mcp-server
 ```
-(or add the server manually to `~/.gemini/settings.json` using the Bearer form above)
+No API key needed — the extension signs in with your SEOmonitor account on first use.
 
 ---
 
