@@ -7,6 +7,7 @@ import { logger } from '../logger.js';
 import { RateLimiter } from '../rate-limiter.js';
 
 const JSON_BODY_LIMIT = '4mb';
+const MARKETING_URL = process.env.MCP_MARKETING_URL || 'https://www.seomonitor.com/mcp';
 const RATE_LIMIT_RPM = Number(process.env.MCP_RATE_LIMIT_RPM || '60');
 const RATE_LIMIT_BURST = Number(process.env.MCP_RATE_LIMIT_BURST || '30');
 
@@ -68,11 +69,16 @@ export class HttpTransport {
     // RFC 9728 protected-resource metadata: points OAuth-capable MCP clients
     // (Claude, ChatGPT) at the authorization server. Key-in-URL connectors are
     // unaffected. Clients probe both the root and path-suffixed well-known URI.
+    //
+    // The resource identity is the bare host — the published connect URL. The
+    // /mcp alias serves the same metadata so connectors on the old URL keep
+    // working; nothing downstream reads the value (the access token carries no
+    // audience claim), so both forms resolve to the same server either way.
     const publicUrl = (process.env.MCP_PUBLIC_URL || 'https://mcp.seomonitor.com').replace(/\/$/, '');
     const authServerUrl = (process.env.MCP_AUTH_SERVER_URL || 'https://auth.seomonitor.com').replace(/\/$/, '');
     const resourceMetadata = (_req: Request, res: Response) => {
       res.json({
-        resource: `${publicUrl}/mcp`,
+        resource: publicUrl,
         authorization_servers: [authServerUrl],
         bearer_methods_supported: ['header'],
       });
@@ -132,6 +138,25 @@ export class HttpTransport {
     const handleMcpNonPost = (_req: Request, res: Response) => {
       jsonRpcError(res, 405, -32000, 'Method not allowed. This server runs in stateless mode; send POST requests.');
     };
+
+    // Bare host — the published connect URL. Bearer only: there is no path
+    // segment to carry a key here, and a root :apiKey wildcard would shadow
+    // /health and the well-known URIs.
+    app.post('/', handleMcpPost);
+    app.delete('/', handleMcpNonPost);
+    app.get('/', (req: Request, res: Response) => {
+      // Browsers get the marketing page; everything else keeps the 405 that
+      // /mcp returns, so a client probing the URL before it POSTs sees a
+      // known-good shape. Test the header directly rather than req.accepts():
+      // that resolves a missing or */* Accept to the first listed type, which
+      // would divert non-browser callers into an HTML page.
+      // If SSE-on-GET is ever added, exempt Accept: text/event-stream here.
+      if (req.headers.accept?.includes('text/html')) {
+        res.redirect(302, MARKETING_URL);
+        return;
+      }
+      handleMcpNonPost(req, res);
+    });
 
     app.post('/mcp', handleMcpPost);
     app.get('/mcp', handleMcpNonPost);
