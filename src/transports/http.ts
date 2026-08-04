@@ -10,6 +10,9 @@ const JSON_BODY_LIMIT = '4mb';
 const MARKETING_URL = process.env.MCP_MARKETING_URL || 'https://www.seomonitor.com/mcp';
 const RATE_LIMIT_RPM = Number(process.env.MCP_RATE_LIMIT_RPM || '60');
 const RATE_LIMIT_BURST = Number(process.env.MCP_RATE_LIMIT_BURST || '30');
+// Public by design — OpenAI hands this out to be served openly, it grants nothing
+const OPENAI_APPS_CHALLENGE_TOKEN =
+  process.env.OPENAI_APPS_CHALLENGE_TOKEN || 'qo7wOitMYzmiz1ZArfLW4tcTqaiCmlo1r2_GgfnS8io';
 
 // Never log full API keys — show enough to correlate a user, nothing more
 function maskKey(apiKey: string): string {
@@ -64,6 +67,14 @@ export class HttpTransport {
 
     app.get('/health', (_req, res) => {
       res.json({ status: 'ok', server: 'seomonitor-mcp-server' });
+    });
+
+    // Domain ownership proof for the ChatGPT app directory submission. Unlike
+    // the OAuth metadata below, this one belongs at the origin root: OpenAI
+    // fetches this exact URI and nothing else, so no MCP client inherits it as
+    // a fallback. Keep it served — the directory re-verifies after listing.
+    app.get('/.well-known/openai-apps-challenge', (_req, res) => {
+      res.type('text/plain').send(OPENAI_APPS_CHALLENGE_TOKEN);
     });
 
     // RFC 9728 protected-resource metadata: points OAuth-capable MCP clients
