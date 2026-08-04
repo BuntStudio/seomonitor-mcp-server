@@ -2,6 +2,9 @@ import axios, { AxiosInstance } from 'axios';
 import { UserSession, ApiResponse } from '../types.js';
 import { Logger } from '../logger.js';
 
+const CLIENT_ID = 'mcp-server';
+const CLIENT_VERSION = '1.0.0';
+
 export interface SEOMonitorCampaign {
   campaign_id: number;
   campaign_name: string;
@@ -66,6 +69,11 @@ export class SEOMonitorClient {
         'Authorization': `Bearer ${session.apiKey}`,
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        // Splits MCP traffic out of the external API's "unknown" bucket in Sentry
+        // (api.client tag). Without it these calls are indistinguishable from any
+        // other v3 consumer, since axios sends no identifying User-Agent.
+        'X-SM-Client': CLIENT_ID,
+        'X-SM-Client-Version': CLIENT_VERSION,
       },
       timeout: resolvedTimeout,
       // Every list this API takes — campaign_ids, keywords, domains — is
