@@ -175,7 +175,27 @@ export class MCPServer {
         // Log detailed error information
         const duration = Date.now() - startTime;
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-        
+        const upstreamStatus = (error as any)?.status ?? (error as any)?.response?.status;
+
+        // An upstream 404 is an empty result, not a failure — the API answers
+        // "Data not found" when nothing matches the campaign/date/search
+        // criteria. Same for the research endpoints' 400 on markets we don't
+        // cover. Surfaced as tool errors these made assistants retry the
+        // identical call and dominated the 4xx line in the health metrics.
+        if (upstreamStatus === 404 || (upstreamStatus === 400 && errorMessage.includes('not available for this market'))) {
+          logger.info(`∅ Tool ${name} returned no data`, {
+            duration: `${duration}ms`,
+            upstreamStatus,
+            errorMessage,
+          });
+          return {
+            content: [{
+              type: 'text',
+              text: `No data available: ${errorMessage}. Nothing matches the requested criteria (campaign, dates, search term, or market) — retrying with the same arguments will not help.`,
+            }],
+          };
+        }
+
         logger.error(`❌ Tool ${name} execution failed`, {
           duration: `${duration}ms`,
           errorMessage: errorMessage,
