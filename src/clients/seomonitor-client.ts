@@ -222,7 +222,10 @@ export class SEOMonitorClient {
     if (options?.startDate) params.append('start_date', options.startDate);
     if (options?.endDate) params.append('end_date', options.endDate);
     if (options?.keywordIds) {
-      options.keywordIds.forEach(id => params.append('keyword_ids[]', id.toString()));
+      // The API reads comma-separated lists; keyword_ids[]=… parses as an
+      // array upstream and 500s (same class of bug as the paramsSerializer
+      // fix, but this query string is built by hand so it bypassed it).
+      params.append('keyword_ids', options.keywordIds.join(','));
     }
 
     const response = await this.client.get(`/rank-tracker/v3.0/keywords/daily-ranks?${params}`);
@@ -423,7 +426,10 @@ export class SEOMonitorClient {
     if (options?.endDate) params.append('end_date', options.endDate);
     if (options?.limit) params.append('limit', options.limit.toString());
     if (options?.keywordIds) {
-      options.keywordIds.forEach(id => params.append('keyword_ids[]', id.toString()));
+      // The API reads comma-separated lists; keyword_ids[]=… parses as an
+      // array upstream and 500s (same class of bug as the paramsSerializer
+      // fix, but this query string is built by hand so it bypassed it).
+      params.append('keyword_ids', options.keywordIds.join(','));
     }
 
     const response = await this.client.get(`/organic-traffic/v3.0/keywords?${params}`);
