@@ -191,6 +191,10 @@ export class RankAdvancedTools {
             type: 'integer',
             description: 'Optional: Pagination offset',
           },
+          include_raw_content: {
+            type: 'boolean',
+            description: 'Optional: return the stored AI Overview answer for each record (sends skip_html=false). The content field is rendered HTML and dominates the payload (~90% of each record), so leave it off unless the answer text itself is needed — links, brand_presence and rank are always returned.',
+          },
         },
         required: ['campaign_id', 'start_date', 'end_date'],
       },
@@ -403,8 +407,12 @@ export class RankAdvancedTools {
    * Execute get_keyword_ai_overview tool
    */
   static async executeGetKeywordAiOverview(args: any, seoClient: SEOMonitorClient) {
-    const { campaign_id, start_date, end_date, keyword_ids, group_id, limit, offset } = args;
+    const { campaign_id, start_date, end_date, keyword_ids, group_id, limit, offset, include_raw_content } = args;
 
+    // The API includes `content` by default (published contract); for MCP use it
+    // is ~90% of every record, so suppress it unless explicitly requested. The
+    // API's own include_raw_content param (untouched Google snapshot) is
+    // deliberately not exposed here.
     const result = await seoClient.getKeywordAiOverview(campaign_id, {
       startDate: start_date,
       endDate: end_date,
@@ -412,6 +420,7 @@ export class RankAdvancedTools {
       groupId: group_id,
       limit,
       offset,
+      skipHtml: include_raw_content === true ? false : true,
     });
 
     return {

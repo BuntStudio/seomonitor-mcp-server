@@ -795,7 +795,7 @@ export class CompositeTools {
       try {
         for (;;) {
           const page = kind === 'aio'
-            ? await seoClient.getKeywordAiOverview(campaign_id, { startDate, endDate, groupId, keywordIds, limit: pageSize, offset })
+            ? await seoClient.getKeywordAiOverview(campaign_id, { startDate, endDate, groupId, keywordIds, limit: pageSize, offset, skipHtml: true })
             : await seoClient.getKeywordAiSearch(campaign_id, { startDate, endDate, groupId, keywordIds, limit: pageSize, offset, skipHtml: true });
           const pageRows = Array.isArray(page) ? page : [];
           rows.push(...pageRows.map((row: any) => ({ source: kind, row })));

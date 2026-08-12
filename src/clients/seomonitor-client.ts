@@ -320,17 +320,19 @@ export class SEOMonitorClient {
     limit?: number;
     offset?: number;
     responseEncoding?: string;
+    skipHtml?: boolean;
   }): Promise<any[]> {
     const params = new URLSearchParams();
     params.append('campaign_id', campaignId.toString());
     params.append('start_date', options?.startDate || '');
     params.append('end_date', options?.endDate || '');
-    
+
     if (options?.groupId) params.append('group_id', options.groupId);
     if (options?.keywordIds) params.append('keyword_ids', options.keywordIds);
     if (options?.limit) params.append('limit', options.limit.toString());
     if (options?.offset) params.append('offset', options.offset.toString());
     if (options?.responseEncoding) params.append('response_encoding', options.responseEncoding);
+    if (options?.skipHtml !== undefined) params.append('skip_html', options.skipHtml.toString());
 
     const response = await this.client.get(`/rank-tracker/v3.0/keywords/aio?${params}`);
     return response.data;
