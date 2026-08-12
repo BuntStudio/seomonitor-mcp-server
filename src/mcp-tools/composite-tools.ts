@@ -67,15 +67,21 @@ function textResult(data: unknown) {
 // compactJson truncates mid-string, which turns an oversized page into invalid
 // JSON. For a paged result that is worse than a short page: the caller can't
 // read `returned` and its offset arithmetic silently breaks. Drop rows until
-// the payload fits and let the caller page again.
-function fitPagedResult(build: (rows: any[]) => any, rows: any[]) {
+// the payload fits and let the caller page again. Tools whose rows are chunky
+// enough that the default budget caps pages far below their documented limit
+// (positioning: ~600 bytes/row -> 12 rows of a promised 100) pass a larger
+// budget; emission stays here because textResult would re-truncate at the
+// default budget.
+function fitPagedResult(build: (rows: any[]) => any, rows: any[], budget = MAX_RESULT_LENGTH) {
   let page = rows;
   let payload = build(page);
-  while (page.length > 1 && JSON.stringify(payload).length > MAX_RESULT_LENGTH) {
+  while (page.length > 1 && JSON.stringify(payload).length > budget) {
     page = page.slice(0, Math.max(1, Math.floor(page.length * 0.8)));
     payload = build(page);
   }
-  return textResult(payload);
+  let json = JSON.stringify(payload, null, 2);
+  if (json.length > budget) json = JSON.stringify(payload);
+  return { content: [{ type: 'text', text: json }] };
 }
 
 function normalizeHost(value: string | undefined | null): string | null {
@@ -283,7 +289,7 @@ export class CompositeTools {
           brand: { type: 'boolean', description: 'Optional: Filter brand-only keywords when true, non-brand keywords when false' },
           aio_presence: { type: 'boolean', description: 'Optional: Filter by Google AI Overview SERP presence. Different from in_aio, which is brand presence in the AI Overview' },
           ais_presence: { type: 'boolean', description: 'Optional: Filter by AI Search presence/citations across ChatGPT/Gemini/Perplexity' },
-          in_aio: { type: 'boolean', description: 'Optional: Filter by Google AI Overview brand presence' },
+          in_aio: { type: 'boolean', description: 'Optional: Keep keywords where ANY brand is named in the AI Overview — not necessarily this campaign\'s brand. Like every AIO/AIS filter here it reads the state as of the window\'s end date, not per-date history, so the matched count does not change with the range; for per-date AIO history use seomonitor_get_daily_keyword_ranks_ai_overview' },
           in_ai_search: { type: 'boolean', description: 'Optional: Filter by AI Search brand presence across ChatGPT/Perplexity/Gemini' },
           group_id: { type: 'string', description: 'Optional: Keyword group ID' },
           device: { type: 'string', enum: [...DEVICE_VALUES], description: 'Optional: Device for rank/SERP/AIO filters. Default desktop. The campaign may track this device to a shallower depth than the other — check primary_device and max_tracked_position_desktop/mobile from seomonitor_get_tracked_campaigns before reading a device comparison' },
@@ -795,7 +801,7 @@ export class CompositeTools {
       try {
         for (;;) {
           const page = kind === 'aio'
-            ? await seoClient.getKeywordAiOverview(campaign_id, { startDate, endDate, groupId, keywordIds, limit: pageSize, offset })
+            ? await seoClient.getKeywordAiOverview(campaign_id, { startDate, endDate, groupId, keywordIds, limit: pageSize, offset, skipHtml: true })
             : await seoClient.getKeywordAiSearch(campaign_id, { startDate, endDate, groupId, keywordIds, limit: pageSize, offset, skipHtml: true });
           const pageRows = Array.isArray(page) ? page : [];
           rows.push(...pageRows.map((row: any) => ({ source: kind, row })));
@@ -952,7 +958,7 @@ export class CompositeTools {
       has_more: offset + rowsPage.length < filtered.length,
       note: 'mentioned = the brand was NAMED in the answer. cited = one of our URLs was listed as a source. They are independent: report both columns, never a single presence figure. main_domain_citation_rank 100 means the main domain was not among the top cited sources even when a subdomain URL was, so check our_cited_urls before calling it absent. competitor_domains_cited lists every non-campaign domain cited here, tracked competitor or not.',
       keywords: rowsPage,
-    }), page);
+    }), page, 32000);
   }
 
   static async execute(toolName: string, args: any, seoClient: SEOMonitorClient) {
