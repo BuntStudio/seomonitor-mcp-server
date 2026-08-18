@@ -91,7 +91,7 @@ export class VisibilityTools {
 
   static async executeGetShareOfVoice(args: any, seoClient: SEOMonitorClient) {
     const { campaign_id, date, group_id, keyword_ids, competitor_domains, metrics_weighted_by_search_volume, device } = args;
-    const result = await seoClient.getShareOfVoice(campaign_id, {
+    const result: any = await seoClient.getShareOfVoice(campaign_id, {
       date,
       groupId: group_id,
       keywordIds: keyword_ids,
