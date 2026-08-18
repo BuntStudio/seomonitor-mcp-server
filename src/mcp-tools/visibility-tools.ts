@@ -99,6 +99,24 @@ export class VisibilityTools {
       metricsWeightedBySearchVolume: metrics_weighted_by_search_volume,
       device,
     });
+    // Self-defending annotations (869ek7dzh D1/D3): each block counts a
+    // different competitor universe, and an empty AIS block usually means the
+    // channel is not tracked. Descriptions alone get skipped by weaker
+    // callers, so stamp the reading rules into the payload itself.
+    if (result && typeof result === 'object' && !Array.isArray(result)) {
+      if (result.organic_share_of_voice && typeof result.organic_share_of_voice === 'object') {
+        result.organic_share_of_voice.basis = 'ALL domains detected in the SERPs for these keywords (see competitors_number) — NOT comparable with ai_overview_share_of_voice percentages';
+      }
+      if (result.ai_overview_share_of_voice && typeof result.ai_overview_share_of_voice === 'object') {
+        result.ai_overview_share_of_voice.basis = 'ONLY the competitors configured on the campaign — a share of the tracked set, not of the whole AI Overview surface';
+      }
+      const ais = result.ai_search_share_of_voice;
+      if (ais && typeof ais === 'object'
+        && (!Array.isArray(ais.domains) || ais.domains.length === 0)
+        && !(ais.total_impression_score > 0)) {
+        ais.status = 'AI Search is likely NOT TRACKED on this campaign (no domains, zero impression score) — report it as untracked, never as zero visibility';
+      }
+    }
     return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
   }
 

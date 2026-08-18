@@ -29,6 +29,41 @@ function pruneRawContent(result: any): { data: any; omitted: number } {
   return { data, omitted };
 }
 
+// The REST payloads for the group AIS visibility endpoints are bare per-day
+// arrays with no enablement info, so a caller cannot tell "zero visibility"
+// from "engine never tracked" — the exact misread 869ek7dzh D1 documents.
+// Fetch enablement separately (same fallback the keyword AIS tool uses) and
+// wrap the MCP result with it, so the distinction survives ANY caller prompt.
+export async function fetchAisEnablement(
+  seoClient: SEOMonitorClient,
+  campaignId: number,
+  groupId: any,
+  startDate: string,
+  endDate: string,
+  requestedProvider?: string,
+): Promise<any> {
+  let enabledProviders: string[] | null = null;
+  let activeProvider: string | null = null;
+  try {
+    const groups: any = await seoClient.getGroupData(campaignId, groupId || '0', { startDate, endDate });
+    const first = Array.isArray(groups) ? groups[0] : null;
+    enabledProviders = first?.ai_search?.enabled_providers ?? null;
+    activeProvider = requestedProvider ?? first?.ai_search?.active_provider ?? null;
+  } catch {
+    // Enablement is context, not the answer — a failure here must not sink the read.
+  }
+  const requested = requestedProvider ?? null;
+  return {
+    requested_provider: requested,
+    active_provider: activeProvider,
+    enabled_providers: enabledProviders,
+    requested_provider_enabled: requested && Array.isArray(enabledProviders) ? enabledProviders.includes(requested) : null,
+    note: Array.isArray(enabledProviders) && enabledProviders.length === 0
+      ? 'This campaign has no AI Search engine enabled — an empty or zero series means NOT TRACKED, never zero visibility. Say that.'
+      : 'If the series is empty or zero, check enabled_providers first: an engine that is not enabled is untracked, not absent from AI answers.',
+  };
+}
+
 /**
  * AI Search (AIS) Tools
  * Rank-tracker endpoints for Google AI Search Mode: keyword data, daily ranks,
@@ -267,7 +302,8 @@ export class AiSearchTools {
       metricsWeightedBySearchVolume: metrics_weighted_by_search_volume,
       provider: ai_search_llm,
     });
-    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    const providerInfo = await fetchAisEnablement(seoClient, campaign_id, group_id, start_date, end_date, ai_search_llm);
+    return { content: [{ type: 'text', text: JSON.stringify({ ai_search_provider: providerInfo, days: result }, null, 2) }] };
   }
 
   static async executeGetDailyGroupAisCitations(args: any, seoClient: SEOMonitorClient) {
@@ -281,7 +317,8 @@ export class AiSearchTools {
       metricsWeightedBySearchVolume: metrics_weighted_by_search_volume,
       provider: ai_search_llm,
     });
-    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    const providerInfo = await fetchAisEnablement(seoClient, campaign_id, group_id, start_date, end_date, ai_search_llm);
+    return { content: [{ type: 'text', text: JSON.stringify({ ai_search_provider: providerInfo, days: result }, null, 2) }] };
   }
 
   static async execute(toolName: string, args: any, seoClient: SEOMonitorClient) {
