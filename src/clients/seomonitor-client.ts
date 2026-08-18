@@ -181,6 +181,8 @@ export class SEOMonitorClient {
     // instead of sorting a single page.
     orderBy?: string;
     orderDirection?: 'asc' | 'desc';
+    keywordIds?: string;
+    includeAllGroups?: string;
     intent?: string;
     serpFeature?: string;
     rankBand?: string;
@@ -191,7 +193,10 @@ export class SEOMonitorClient {
     const params = new URLSearchParams();
     params.append('campaign_id', campaignId.toString());
 
-    if (options?.groupId) params.append('group_id', options.groupId.toString());
+    // != null, not truthiness: group_id 0 (all keywords) is a valid value.
+    if (options?.groupId != null && options.groupId !== '') params.append('group_id', options.groupId.toString());
+    if (options?.keywordIds) params.append('keyword_ids', options.keywordIds);
+    if (options?.includeAllGroups) params.append('include_all_groups', options.includeAllGroups);
     if (options?.startDate) params.append('start_date', options.startDate);
     if (options?.endDate) params.append('end_date', options.endDate);
     if (options?.limit) params.append('limit', options.limit.toString());
@@ -215,10 +220,16 @@ export class SEOMonitorClient {
     startDate?: string;
     endDate?: string;
     keywordIds?: number[];
+    groupId?: string;
+    domain?: string;
+    getArchive?: string;
+    limit?: number;
+    offset?: number;
+    search?: string;
   }): Promise<any[]> {
     const params = new URLSearchParams();
     params.append('campaign_id', campaignId.toString());
-    
+
     if (options?.startDate) params.append('start_date', options.startDate);
     if (options?.endDate) params.append('end_date', options.endDate);
     if (options?.keywordIds) {
@@ -227,6 +238,13 @@ export class SEOMonitorClient {
       // fix, but this query string is built by hand so it bypassed it).
       params.append('keyword_ids', options.keywordIds.join(','));
     }
+    // != null, not truthiness: group_id "0" (all keywords) and offset 0 are valid.
+    if (options?.groupId != null && options.groupId !== '') params.append('group_id', String(options.groupId));
+    if (options?.domain) params.append('domain', options.domain);
+    if (options?.getArchive) params.append('get_archive', options.getArchive);
+    if (options?.limit) params.append('limit', options.limit.toString());
+    if (options?.offset != null) params.append('offset', options.offset.toString());
+    if (options?.search) params.append('search', options.search);
 
     const response = await this.client.get(`/rank-tracker/v3.0/keywords/daily-ranks?${params}`);
     return response.data;
@@ -401,14 +419,16 @@ export class SEOMonitorClient {
   async getTrafficData(campaignId: number, options?: {
     startDate?: string;
     endDate?: string;
-    segmentId?: number;
+    // The API param is `segment`, a name string (all | brand | non-brand |
+    // custom segment name), NOT segment_id. Default upstream is Non-Brand.
+    segment?: string;
   }): Promise<SEOMonitorTrafficData[]> {
     const params = new URLSearchParams();
     params.append('campaign_id', campaignId.toString());
-    
+
     if (options?.startDate) params.append('start_date', options.startDate);
     if (options?.endDate) params.append('end_date', options.endDate);
-    if (options?.segmentId) params.append('segment_id', options.segmentId.toString());
+    if (options?.segment) params.append('segment', options.segment);
 
     // Align with OpenAPI: /v3/organic-traffic/v3.0/daily-traffic (baseURL already includes /v3)
     const response = await this.client.get(`/organic-traffic/v3.0/daily-traffic?${params}`);
@@ -419,14 +439,26 @@ export class SEOMonitorClient {
     startDate?: string;
     endDate?: string;
     keywordIds?: number[];
+    segment?: string;
     limit?: number;
+    offset?: number;
+    orderBy?: string;
+    orderDirection?: string;
+    trackingStatus?: string;
+    search?: string;
   }): Promise<any[]> {
     const params = new URLSearchParams();
     params.append('campaign_id', campaignId.toString());
-    
+
     if (options?.startDate) params.append('start_date', options.startDate);
     if (options?.endDate) params.append('end_date', options.endDate);
+    if (options?.segment) params.append('segment', options.segment);
     if (options?.limit) params.append('limit', options.limit.toString());
+    if (options?.offset != null) params.append('offset', options.offset.toString());
+    if (options?.orderBy) params.append('order_by', options.orderBy);
+    if (options?.orderDirection) params.append('order_direction', options.orderDirection);
+    if (options?.trackingStatus) params.append('tracking_status', options.trackingStatus);
+    if (options?.search) params.append('search', options.search);
     if (options?.keywordIds) {
       // The API reads comma-separated lists; keyword_ids[]=… parses as an
       // array upstream and 500s (same class of bug as the paramsSerializer
@@ -517,8 +549,11 @@ export class SEOMonitorClient {
     return response.data;
   }
 
-  async getForecastObjectiveData(campaignId: number, forecastId: number): Promise<any> {
-    const response = await this.client.get(`/forecast/v3.0/objective?campaign_id=${campaignId}&forecast_id=${forecastId}`);
+  async getForecastObjectiveData(campaignId: number, forecastId?: number): Promise<any> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId.toString());
+    if (forecastId != null) params.append('forecast_id', forecastId.toString());
+    const response = await this.client.get(`/forecast/v3.0/objective?${params}`);
     return response.data;
   }
 
@@ -599,8 +634,6 @@ export class SEOMonitorClient {
 
   // Ranking Pages
   async getRankingPages(campaignId: number, options?: {
-    startDate?: string;
-    endDate?: string;
     keywordIds?: string;
     groupId?: string;
     limit?: number;
@@ -610,8 +643,6 @@ export class SEOMonitorClient {
     const params = new URLSearchParams();
     params.append('campaign_id', campaignId.toString());
 
-    if (options?.startDate) params.append('start_date', options.startDate);
-    if (options?.endDate) params.append('end_date', options.endDate);
     if (options?.keywordIds) params.append('keyword_ids', options.keywordIds);
     if (options?.groupId) params.append('group_id', options.groupId);
     if (options?.limit) params.append('limit', options.limit.toString());
@@ -997,6 +1028,9 @@ export class SEOMonitorClient {
     startDate: string;
     endDate: string;
     groupId?: string;
+    // Integer device code, unlike the string devices elsewhere: 1 = desktop
+    // (upstream default), 2 = mobile.
+    device?: number;
   }): Promise<any> {
     const params = new URLSearchParams();
     params.append('campaign_id', campaignId.toString());
@@ -1004,6 +1038,7 @@ export class SEOMonitorClient {
     params.append('end_date', options.endDate);
 
     if (options.groupId) params.append('group_id', options.groupId);
+    if (options.device != null) params.append('device', options.device.toString());
 
     const response = await this.client.get(`/rank-tracker/v3.0/serp-visibility?${params}`);
     return response.data;
@@ -1016,13 +1051,15 @@ export class SEOMonitorClient {
   // Get Lists
   async getVaultLists(campaignId: number, options?: {
     limit?: number;
-    offset?: string;
+    offset?: number;
+    search?: string;
   }): Promise<any[]> {
     const params = new URLSearchParams();
     params.append('campaign_id', campaignId.toString());
 
     if (options?.limit) params.append('limit', options.limit.toString());
-    if (options?.offset) params.append('offset', options.offset);
+    if (options?.offset != null) params.append('offset', options.offset.toString());
+    if (options?.search) params.append('search', options.search);
 
     const response = await this.client.get(`/keyword-vault/v3.0/get-lists?${params}`);
     return response.data;

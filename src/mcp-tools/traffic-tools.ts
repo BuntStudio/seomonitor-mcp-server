@@ -13,7 +13,7 @@ export class TrafficTools {
       name: 'seomonitor_get_daily_traffic_data',
       title: 'Get Daily Traffic Data',
       annotations: { title: 'Get Daily Traffic Data', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Traffic metrics segmented by various dimensions',
+      description: 'Daily organic traffic metrics for a campaign. IMPORTANT: with no segment specified the API returns the NON-BRAND segment, not all traffic — pass segment=all for total organic.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -29,13 +29,9 @@ export class TrafficTools {
             type: 'string',
             description: 'End date (YYYY-MM-DD)',
           },
-          search: {
-            type: 'string',
-            description: 'Optional: Search filter',
-          },
           segment: {
             type: 'string',
-            description: 'Optional: Traffic segment (all, non-brand, brand, or custom segment name)',
+            description: 'Optional: Traffic segment (all, non-brand, brand, or custom segment name). Defaults to non-brand',
           },
         },
         required: ['campaign_id', 'start_date', 'end_date'],
@@ -51,7 +47,7 @@ export class TrafficTools {
       name: 'seomonitor_get_traffic_by_keywords',
       title: 'Get Traffic By Keywords',
       annotations: { title: 'Get Traffic By Keywords', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Keyword-level traffic attribution',
+      description: 'Keyword-level traffic attribution. IMPORTANT: with no segment specified the API returns the NON-BRAND segment, not all traffic — pass segment=all for total organic.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -105,11 +101,12 @@ export class TrafficTools {
    * Execute get_daily_traffic_data tool
    */
   static async executeGetDailyTraffic(args: any, seoClient: SEOMonitorClient) {
-    const { campaign_id, start_date, end_date } = args;
+    const { campaign_id, start_date, end_date, segment } = args;
 
     const result = await seoClient.getTrafficData(parseInt(campaign_id), {
       startDate: start_date,
       endDate: end_date,
+      segment,
     });
 
     return {
@@ -126,15 +123,18 @@ export class TrafficTools {
    * Execute get_traffic_by_keywords tool
    */
   static async executeGetTrafficByKeywords(args: any, seoClient: SEOMonitorClient) {
-    const { campaign_id, start_date, end_date, keyword_ids } = args;
-
-    // Convert keyword_ids string to array if provided
-    const keywordIdsArray = keyword_ids ? keyword_ids.split(',').map((id: string) => parseInt(id.trim())) : undefined;
+    const { campaign_id, start_date, end_date, segment, limit, offset, order_by, order_direction, tracking_status, search } = args;
 
     const result = await seoClient.getTrafficByKeywords(parseInt(campaign_id), {
       startDate: start_date,
       endDate: end_date,
-      keywordIds: keywordIdsArray,
+      segment,
+      limit,
+      offset,
+      orderBy: order_by,
+      orderDirection: order_direction,
+      trackingStatus: tracking_status,
+      search,
     });
 
     return {

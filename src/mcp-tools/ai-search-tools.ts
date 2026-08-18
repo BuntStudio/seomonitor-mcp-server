@@ -101,7 +101,7 @@ export class AiSearchTools {
           domain: { type: 'string', description: 'Optional: Domain to get ranks for' },
           group_id: { type: 'string', description: 'Optional: Specific group ID' },
           keyword_ids: { type: 'string', description: 'Optional: Specific keyword IDs (comma-separated)' },
-          get_archive: { type: 'string', description: 'Optional: Retrieve archived data' },
+          get_archive: { type: 'string', description: 'Optional: If true, returns ONLY archived/deleted keywords (filters to archived, does not add them to active results)' },
           limit: { type: 'integer', description: 'Optional: Results limit' },
           offset: { type: 'integer', description: 'Optional: Pagination offset' },
           search: { type: 'string', description: 'Optional: Keyword search filter' },
@@ -117,7 +117,7 @@ export class AiSearchTools {
       name: 'seomonitor_get_daily_group_ai_search_brand_mentions',
       title: 'Get Daily Group AI Search Brand Mentions',
       annotations: { title: 'Get Daily Group AI Search Brand Mentions', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Daily group visibility for brand mentions inside AI Search (AIS) results',
+      description: 'Daily group visibility for brand mentions inside AI Search (AIS) results. Returns one brand_presence_visibility score per date (a single value — no desktop/mobile split, unlike the AI Overview visibility tools). An untracked engine returns empty/zero without error: report that as "not tracked", never as zero visibility.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -127,7 +127,8 @@ export class AiSearchTools {
           group_id: { type: 'integer', description: 'Optional: Specific group ID' },
           keyword_ids: { type: 'string', description: 'Optional: Specific keyword IDs (comma-separated)' },
           domain: { type: 'string', description: 'Optional: Domain for visibility calculation' },
-          metrics_weighted_by_search_volume: { type: 'integer', description: 'Optional: Weight metrics by search volume (0 or 1)' },
+          metrics_weighted_by_search_volume: { type: 'integer', description: 'Optional: Weight metrics by search volume (1) or not (0). Omitted = the campaign\'s own weighting setting, not unweighted' },
+          ai_search_llm: { type: 'string', description: 'Optional: AI Search engine to read: openai (ChatGPT), gemini, or perplexity. Defaults to the campaign\'s active provider' },
         },
         required: ['campaign_id', 'start_date', 'end_date'],
       },
@@ -139,7 +140,7 @@ export class AiSearchTools {
       name: 'seomonitor_get_daily_group_ai_search_site_citations',
       title: 'Get Daily Group AI Search Site Citations',
       annotations: { title: 'Get Daily Group AI Search Site Citations', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Daily group visibility for site citations inside AI Search (AIS) results',
+      description: 'Daily group visibility for site citations inside AI Search (AIS) results. Returns one source_citation_visibility score per date (a single value — no desktop/mobile split, unlike the AI Overview visibility tools). An untracked engine returns empty/zero without error: report that as "not tracked", never as zero visibility.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -149,7 +150,8 @@ export class AiSearchTools {
           group_id: { type: 'integer', description: 'Optional: Specific group ID' },
           keyword_ids: { type: 'string', description: 'Optional: Specific keyword IDs (comma-separated)' },
           domain: { type: 'string', description: 'Optional: Domain for visibility calculation' },
-          metrics_weighted_by_search_volume: { type: 'integer', description: 'Optional: Weight metrics by search volume (0 or 1)' },
+          metrics_weighted_by_search_volume: { type: 'integer', description: 'Optional: Weight metrics by search volume (1) or not (0). Omitted = the campaign\'s own weighting setting, not unweighted' },
+          ai_search_llm: { type: 'string', description: 'Optional: AI Search engine to read: openai (ChatGPT), gemini, or perplexity. Defaults to the campaign\'s active provider' },
         },
         required: ['campaign_id', 'start_date', 'end_date'],
       },
@@ -255,7 +257,7 @@ export class AiSearchTools {
   }
 
   static async executeGetDailyGroupAisMentions(args: any, seoClient: SEOMonitorClient) {
-    const { campaign_id, start_date, end_date, group_id, keyword_ids, domain, metrics_weighted_by_search_volume } = args;
+    const { campaign_id, start_date, end_date, group_id, keyword_ids, domain, metrics_weighted_by_search_volume, ai_search_llm } = args;
     const result = await seoClient.getDailyGroupAisMentions(campaign_id, {
       startDate: start_date,
       endDate: end_date,
@@ -263,12 +265,13 @@ export class AiSearchTools {
       keywordIds: keyword_ids,
       domain,
       metricsWeightedBySearchVolume: metrics_weighted_by_search_volume,
+      provider: ai_search_llm,
     });
     return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
   }
 
   static async executeGetDailyGroupAisCitations(args: any, seoClient: SEOMonitorClient) {
-    const { campaign_id, start_date, end_date, group_id, keyword_ids, domain, metrics_weighted_by_search_volume } = args;
+    const { campaign_id, start_date, end_date, group_id, keyword_ids, domain, metrics_weighted_by_search_volume, ai_search_llm } = args;
     const result = await seoClient.getDailyGroupAisCitations(campaign_id, {
       startDate: start_date,
       endDate: end_date,
@@ -276,6 +279,7 @@ export class AiSearchTools {
       keywordIds: keyword_ids,
       domain,
       metricsWeightedBySearchVolume: metrics_weighted_by_search_volume,
+      provider: ai_search_llm,
     });
     return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
   }

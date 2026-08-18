@@ -39,7 +39,7 @@ export class RankTrackingTools {
           },
           limit: {
             type: 'integer',
-            description: 'Optional: Results limit',
+            description: 'Optional: Results limit (default 100, max 1000)',
           },
           offset: {
             type: 'integer',
@@ -47,7 +47,7 @@ export class RankTrackingTools {
           },
           group_id: {
             type: 'string',
-            description: 'Optional: Specific group ID to filter keywords',
+            description: 'Optional: Specific group ID to filter keywords. Special values: 0 = all keywords, -1 = Brand group, -2 = ungrouped, -3 = Forecast objective',
           },
           keyword_ids: {
             type: 'string',
@@ -55,7 +55,7 @@ export class RankTrackingTools {
           },
           order_by: {
             type: 'string',
-            description: 'Optional: Sort field (keyword, search_volume, rank, rank_trend, opportunity)',
+            description: 'Optional: Sort field (keyword, search_volume, year-over-year, rank, rank_trend, rank_trend_impact, opportunity)',
           },
           order_direction: {
             type: 'string',
@@ -97,15 +97,11 @@ export class RankTrackingTools {
           },
           keyword_ids: {
             type: 'string',
-            description: 'Optional: Specific keyword IDs',
-          },
-          group_ids: {
-            type: 'string',
-            description: 'Optional: Keyword group IDs',
+            description: 'Optional: Specific keyword IDs (comma-separated)',
           },
           group_id: {
             type: 'string',
-            description: 'Optional: Specific group ID to filter keywords',
+            description: 'Optional: Specific group ID to filter keywords. Special values: 0 = all keywords, -1 = Brand group, -2 = ungrouped, -3 = Forecast objective',
           },
           domain: {
             type: 'string',
@@ -113,7 +109,7 @@ export class RankTrackingTools {
           },
           get_archive: {
             type: 'string',
-            description: 'Optional: If true, returns data for archived keywords',
+            description: 'Optional: If true, returns ONLY archived/deleted keywords (filters to archived, does not add them to active results)',
           },
           limit: {
             type: 'integer',
@@ -173,7 +169,7 @@ export class RankTrackingTools {
           },
           group_ids: {
             type: 'string',
-            description: 'Group IDs (comma-separated)',
+            description: 'Optional: Group IDs (comma-separated). Defaults to the All Keywords group (0)',
           },
           start_date: {
             type: 'string',
@@ -184,7 +180,7 @@ export class RankTrackingTools {
             description: 'End date (YYYY-MM-DD)',
           },
         },
-        required: ['campaign_id', 'group_ids', 'start_date', 'end_date'],
+        required: ['campaign_id', 'start_date', 'end_date'],
       },
     };
   }
@@ -193,7 +189,7 @@ export class RankTrackingTools {
    * Execute get_keyword_data tool
    */
   static async executeGetKeywordData(args: any, seoClient: SEOMonitorClient) {
-    const { campaign_id, start_date, end_date, device, search, limit, offset } = args;
+    const { campaign_id, start_date, end_date, device, search, limit, offset, group_id, keyword_ids, order_by, order_direction, include_all_groups } = args;
 
     const result = await seoClient.getKeywordData(parseInt(campaign_id), {
       startDate: start_date,
@@ -202,6 +198,11 @@ export class RankTrackingTools {
       search,
       limit,
       offset,
+      groupId: group_id,
+      keywordIds: keyword_ids,
+      orderBy: order_by,
+      orderDirection: order_direction,
+      includeAllGroups: include_all_groups,
     });
 
     return {
@@ -218,7 +219,7 @@ export class RankTrackingTools {
    * Execute get_daily_keyword_ranks tool
    */
   static async executeGetDailyKeywordRanks(args: any, seoClient: SEOMonitorClient) {
-    const { campaign_id, start_date, end_date, keyword_ids } = args;
+    const { campaign_id, start_date, end_date, keyword_ids, group_id, domain, get_archive, limit, offset, search } = args;
 
     // Convert keyword_ids string to array if provided
     const keywordIdsArray = keyword_ids ? keyword_ids.split(',').map((id: string) => parseInt(id.trim())) : undefined;
@@ -227,6 +228,12 @@ export class RankTrackingTools {
       startDate: start_date,
       endDate: end_date,
       keywordIds: keywordIdsArray,
+      groupId: group_id,
+      domain,
+      getArchive: get_archive,
+      limit,
+      offset,
+      search,
     });
 
     return {
@@ -263,7 +270,7 @@ export class RankTrackingTools {
   static async executeGetGroupData(args: any, seoClient: SEOMonitorClient) {
     const { campaign_id, group_ids, start_date, end_date } = args;
 
-    const result = await seoClient.getGroupData(parseInt(campaign_id), group_ids, {
+    const result = await seoClient.getGroupData(parseInt(campaign_id), group_ids ?? '0', {
       startDate: start_date,
       endDate: end_date,
     });

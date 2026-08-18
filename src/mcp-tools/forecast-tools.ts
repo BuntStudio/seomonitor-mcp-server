@@ -61,20 +61,20 @@ export class ForecastTools {
       name: 'seomonitor_get_forecast_objective_data',
       title: 'Get Forecast Objective Data',
       annotations: { title: 'Get Forecast Objective Data', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Objective-specific forecast data',
+      description: 'Objective-specific forecast data. Omit forecast_id to get the campaign\'s CURRENT Objective — the usual way to answer "how is the objective tracking" without knowing an ID.',
       inputSchema: {
         type: 'object',
         properties: {
           forecast_id: {
             type: 'integer',
-            description: 'Forecast objective ID',
+            description: 'Optional: Forecast objective ID. Omitted = the campaign\'s current Objective (if any)',
           },
           campaign_id: {
             type: 'integer',
             description: 'Campaign ID',
           },
         },
-        required: ['forecast_id', 'campaign_id'],
+        required: ['campaign_id'],
       },
     };
   }

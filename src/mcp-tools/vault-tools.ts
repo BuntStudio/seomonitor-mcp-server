@@ -103,11 +103,15 @@ export class VaultTools {
           },
           limit: {
             type: 'integer',
-            description: 'Optional: Results limit',
+            description: 'Optional: Results limit (default 100, max 1000)',
           },
           offset: {
-            type: 'string',
+            type: 'integer',
             description: 'Optional: Pagination offset',
+          },
+          search: {
+            type: 'string',
+            description: 'Optional: Case-insensitive substring filter on the list name',
           },
         },
         required: ['campaign_id'],
@@ -174,11 +178,12 @@ export class VaultTools {
    * Execute get_vault_lists tool
    */
   static async executeGetVaultLists(args: any, seoClient: SEOMonitorClient) {
-    const { campaign_id, limit, offset } = args;
+    const { campaign_id, limit, offset, search } = args;
 
     const result = await seoClient.getVaultLists(campaign_id, {
       limit,
       offset,
+      search,
     });
 
     return {

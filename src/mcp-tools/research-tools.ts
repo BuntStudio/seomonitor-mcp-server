@@ -13,7 +13,7 @@ export class ResearchTools {
       name: 'seomonitor_get_related_keywords',
       title: 'Get Related Keywords',
       annotations: { title: 'Get Related Keywords', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Find related keyword suggestions for a topic Research data exists only for campaigns in the US, UK, RO and ES markets; campaigns in other markets get "Research data is not available for this market" — do not retry them, use a campaign in a covered market instead.',
+      description: 'Find related keyword suggestions for a topic Research data exists only for campaigns in the US, UK, RO and ES markets; campaigns in other markets get "Research data is not available for this market" — do not retry them, use a campaign in a covered market instead. The campaign_id also supplies the MARKET: volumes and ranks come from the campaign\'s country regardless of the keyword\'s language, with no warning on mismatch — state which market you read.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -55,7 +55,7 @@ export class ResearchTools {
       name: 'seomonitor_get_topic_overview',
       title: 'Get Topic Overview',
       annotations: { title: 'Get Topic Overview', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Get aggregated search, SERP, and visibility data for topic keywords Research data exists only for campaigns in the US, UK, RO and ES markets; campaigns in other markets get "Research data is not available for this market" — do not retry them, use a campaign in a covered market instead.',
+      description: 'Get aggregated search, SERP, and visibility data for topic keywords Research data exists only for campaigns in the US, UK, RO and ES markets; campaigns in other markets get "Research data is not available for this market" — do not retry them, use a campaign in a covered market instead. The campaign_id also supplies the MARKET: volumes and ranks come from the campaign\'s country regardless of the keyword\'s language, with no warning on mismatch — state which market you read.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -81,7 +81,7 @@ export class ResearchTools {
       name: 'seomonitor_get_domain_overview',
       title: 'Get Domain Overview',
       annotations: { title: 'Get Domain Overview', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'SEO overview for any domain — ranking keyword count, search volume and year-over-year trend — read against one of your campaigns. The campaign supplies the market, so there is no country or language to pass; use a campaign tracking the market you care about. Research data exists only for campaigns in the US, UK, RO and ES markets; campaigns in other markets get "Research data is not available for this market" — do not retry them, use a campaign in a covered market instead.',
+      description: 'SEO overview for any domain — ranking keyword count, search volume and year-over-year trend — read against one of your campaigns. The campaign supplies the market, so there is no country or language to pass; use a campaign tracking the market you care about. Research data exists only for campaigns in the US, UK, RO and ES markets; campaigns in other markets get "Research data is not available for this market" — do not retry them, use a campaign in a covered market instead. The campaign_id also supplies the MARKET: volumes and ranks come from the campaign\'s country regardless of the keyword\'s language, with no warning on mismatch — state which market you read.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -112,7 +112,7 @@ export class ResearchTools {
       name: 'seomonitor_get_domain_ranking_keywords',
       title: 'Get Domain Ranking Keywords',
       annotations: { title: 'Get Domain Ranking Keywords', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'The keywords any domain ranks for, read against one of your campaigns. The campaign supplies the market, so there is no country or language to pass. Use gap_analysis to answer competitor-gap questions: overlapping for keywords you both rank for, non-overlapping for the ones only they have. Research data exists only for campaigns in the US, UK, RO and ES markets; campaigns in other markets get "Research data is not available for this market" — do not retry them, use a campaign in a covered market instead.',
+      description: 'The keywords any domain ranks for, read against one of your campaigns. The campaign supplies the market, so there is no country or language to pass. Use gap_analysis to answer competitor-gap questions: overlapping for keywords you both rank for, non-overlapping for the ones only they have. Research data exists only for campaigns in the US, UK, RO and ES markets; campaigns in other markets get "Research data is not available for this market" — do not retry them, use a campaign in a covered market instead. The campaign_id also supplies the MARKET: volumes and ranks come from the campaign\'s country regardless of the keyword\'s language, with no warning on mismatch — state which market you read.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -165,7 +165,7 @@ export class ResearchTools {
       name: 'seomonitor_get_research_keyword_data',
       title: 'Get Research Keyword Data',
       annotations: { title: 'Get Research Keyword Data', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Research-specific keyword metrics and SERP data Research data exists only for campaigns in the US, UK, RO and ES markets; campaigns in other markets get "Research data is not available for this market" — do not retry them, use a campaign in a covered market instead.',
+      description: 'Research-specific keyword metrics and SERP data Research data exists only for campaigns in the US, UK, RO and ES markets; campaigns in other markets get "Research data is not available for this market" — do not retry them, use a campaign in a covered market instead. The campaign_id also supplies the MARKET: volumes and ranks come from the campaign\'s country regardless of the keyword\'s language, with no warning on mismatch — state which market you read.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -199,7 +199,7 @@ export class ResearchTools {
       name: 'seomonitor_get_research_ranking_data',
       title: 'Get Research Ranking Data',
       annotations: { title: 'Get Research Ranking Data', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'SERP, search, and ranking data for keywords with competitor analysis Research data exists only for campaigns in the US, UK, RO and ES markets; campaigns in other markets get "Research data is not available for this market" — do not retry them, use a campaign in a covered market instead.',
+      description: 'SERP, search, and ranking data for keywords with competitor analysis Research data exists only for campaigns in the US, UK, RO and ES markets; campaigns in other markets get "Research data is not available for this market" — do not retry them, use a campaign in a covered market instead. The campaign_id also supplies the MARKET: volumes and ranks come from the campaign\'s country regardless of the keyword\'s language, with no warning on mismatch — state which market you read.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -213,11 +213,11 @@ export class ResearchTools {
           },
           domains: {
             type: 'string',
-            description: 'Optional: Domains for comparison',
+            description: 'Required: Comma-separated domains for comparison (max 10)',
           },
           limit: {
             type: 'integer',
-            description: 'Optional: Results limit',
+            description: 'Optional: Results limit (default 100, max 1000)',
           },
           offset: {
             type: 'integer',

@@ -16,9 +16,9 @@ export class AiWriterTools {
         type: 'object',
         properties: {
           campaign_id: { type: 'string', description: 'Required campaign ID' },
-          article_id: { type: 'string', description: 'Required: Specific article ID' },
+          article_id: { type: 'string', description: 'Optional: Specific article ID. Omitted = all the campaign\'s articles' },
         },
-        required: ['campaign_id', 'article_id'],
+        required: ['campaign_id'],
       },
     };
   }
@@ -85,11 +85,11 @@ export class AiWriterTools {
         type: 'object',
         properties: {
           campaign_id: { type: 'string', description: 'Required campaign ID' },
-          on_demand: { type: 'boolean', description: 'Optional: Generate recommendations on demand' },
+          on_demand: { type: 'boolean', description: 'Optional: true generates a FRESH recommendation list, which takes several minutes — leave unset to read the existing list' },
           category: { type: 'string', description: 'Optional: Filter by category' },
-          limit: { type: 'integer', description: 'Optional: Results limit' },
-          metrics: { type: 'boolean', description: 'Optional: Include keyword metrics' },
-          sort_by: { type: 'string', description: 'Optional: Sort field' },
+          limit: { type: 'integer', description: 'Optional: Results limit — MAX 10 on this endpoint (unlike the 1000 caps elsewhere)' },
+          metrics: { type: 'boolean', description: 'Optional: Include keyword metrics (currently has no observable effect on the response)' },
+          sort_by: { type: 'string', description: 'Optional: Sort field (volume, traffic, keywords)' },
           offset: { type: 'integer', description: 'Optional: Pagination offset' },
         },
         required: ['campaign_id'],

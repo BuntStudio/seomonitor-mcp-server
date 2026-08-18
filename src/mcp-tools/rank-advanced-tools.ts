@@ -209,21 +209,13 @@ export class RankAdvancedTools {
       name: 'seomonitor_get_ranking_pages',
       title: 'Get Ranking Pages',
       annotations: { title: 'Get Ranking Pages', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Pages ranking for specific keywords',
+      description: 'Landing pages currently ranking, with the keywords each page ranks for. CURRENT SNAPSHOT ONLY — the endpoint has no date parameters and always reflects today; it cannot compare periods or show historical landing-page changes, so never present its output as belonging to a requested timeframe.',
       inputSchema: {
         type: 'object',
         properties: {
           campaign_id: {
             type: 'integer',
             description: 'Required campaign ID',
-          },
-          start_date: {
-            type: 'string',
-            description: 'Start date (YYYY-MM-DD)',
-          },
-          end_date: {
-            type: 'string',
-            description: 'End date (YYYY-MM-DD)',
           },
           keyword_ids: {
             type: 'string',
@@ -242,7 +234,7 @@ export class RankAdvancedTools {
             description: 'Optional: Pagination offset',
           },
         },
-        required: ['campaign_id', 'start_date', 'end_date'],
+        required: ['campaign_id'],
       },
     };
   }
@@ -528,11 +520,9 @@ export class RankAdvancedTools {
    * Execute get_ranking_pages tool
    */
   static async executeGetRankingPages(args: any, seoClient: SEOMonitorClient) {
-    const { campaign_id, start_date, end_date, keyword_ids, group_id, limit, offset } = args;
+    const { campaign_id, keyword_ids, group_id, limit, offset } = args;
 
     const result = await seoClient.getRankingPages(campaign_id, {
-      startDate: start_date,
-      endDate: end_date,
       keywordIds: keyword_ids,
       groupId: group_id,
       limit,

@@ -30,7 +30,7 @@ export class CampaignTools {
           },
           limit: {
             type: 'integer',
-            description: 'Optional: Max 100 records per request',
+            description: 'Optional: Max 100 records per request. DEFAULT IS 10 — always pass an explicit limit and page with offset when listing an account, or 10 campaigns will look like the whole list',
           },
           offset: {
             type: 'integer',
