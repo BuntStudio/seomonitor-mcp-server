@@ -1,4 +1,5 @@
 import { SEOMonitorClient } from '../clients/seomonitor-client.js';
+import { stripMonthlySeries } from './strip-monthly.js';
 
 /**
  * Keyword Research Tools - Phase 4 Implementation
@@ -40,6 +41,10 @@ export class ResearchTools {
           order_direction: {
             type: 'string',
             description: 'Optional: Sort direction (asc or desc)',
+          },
+          include_monthly_searches: {
+            type: 'boolean',
+            description: 'Optional: Include the 13-month monthly_searches history array on every row. Stripped by default to keep responses compact',
           },
         },
         required: ['campaign_id', 'keyword'],
@@ -151,6 +156,10 @@ export class ResearchTools {
             type: 'string',
             description: 'Optional: substring filter on the keyword',
           },
+          include_monthly_searches: {
+            type: 'boolean',
+            description: 'Optional: Include the 13-month monthly_searches history array on every row. Stripped by default to keep responses compact',
+          },
         },
         required: ['campaign_id', 'url'],
       },
@@ -184,6 +193,10 @@ export class ResearchTools {
           offset: {
             type: 'integer',
             description: 'Optional: Pagination offset',
+          },
+          include_monthly_searches: {
+            type: 'boolean',
+            description: 'Optional: Include the 13-month monthly_searches history array on every row. Stripped by default to keep responses compact',
           },
         },
         required: ['campaign_id', 'keywords'],
@@ -241,6 +254,9 @@ export class ResearchTools {
       orderBy: order_by,
       orderDirection: order_direction,
     });
+    if (args.include_monthly_searches !== true) {
+      stripMonthlySeries(result);
+    }
 
     return {
       content: [
@@ -320,6 +336,9 @@ export class ResearchTools {
       orderDirection: order_direction,
       search,
     });
+    if (args.include_monthly_searches !== true) {
+      stripMonthlySeries(result);
+    }
 
     return {
       content: [
@@ -341,6 +360,9 @@ export class ResearchTools {
       limit,
       offset,
     });
+    if (args.include_monthly_searches !== true) {
+      stripMonthlySeries(result);
+    }
 
     return {
       content: [

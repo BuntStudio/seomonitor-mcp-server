@@ -1,4 +1,5 @@
 import { SEOMonitorClient } from '../clients/seomonitor-client.js';
+import { stripMonthlySeries } from './strip-monthly.js';
 
 /**
  * Keyword Vault Tools - Phase 4 Implementation
@@ -52,6 +53,10 @@ export class VaultTools {
           domain: {
             type: 'string',
             description: 'Optional: Domain for competitor data',
+          },
+          include_monthly_searches: {
+            type: 'boolean',
+            description: 'Optional: Include the 13-month monthly_searches history array on every row. Stripped by default to keep responses compact',
           },
         },
         required: ['campaign_id', 'list'],
@@ -145,6 +150,9 @@ export class VaultTools {
       includeUnqualified: include_unqualified,
       domain,
     });
+    if (args.include_monthly_searches !== true) {
+      stripMonthlySeries(result);
+    }
 
     return {
       content: [

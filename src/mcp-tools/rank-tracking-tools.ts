@@ -1,4 +1,5 @@
 import { SEOMonitorClient } from '../clients/seomonitor-client.js';
+import { stripMonthlySeries } from './strip-monthly.js';
 
 /**
  * Rank Tracking Tools - Phase 2 Implementation
@@ -64,6 +65,10 @@ export class RankTrackingTools {
           include_all_groups: {
             type: 'string',
             description: 'Optional: Whether to include folder and smart group IDs in output (true/false)',
+          },
+          include_monthly_searches: {
+            type: 'boolean',
+            description: 'Optional: Include the 13-month monthly_searches / additional_monthly_sessions history arrays on every row. Stripped by default — they dominate the payload and are rarely needed',
           },
         },
         required: ['campaign_id', 'start_date', 'end_date'],
@@ -189,7 +194,7 @@ export class RankTrackingTools {
    * Execute get_keyword_data tool
    */
   static async executeGetKeywordData(args: any, seoClient: SEOMonitorClient) {
-    const { campaign_id, start_date, end_date, device, search, limit, offset, group_id, keyword_ids, order_by, order_direction, include_all_groups } = args;
+    const { campaign_id, start_date, end_date, device, search, limit, offset, group_id, keyword_ids, order_by, order_direction, include_all_groups, include_monthly_searches } = args;
 
     const result = await seoClient.getKeywordData(parseInt(campaign_id), {
       startDate: start_date,
@@ -204,6 +209,9 @@ export class RankTrackingTools {
       orderDirection: order_direction,
       includeAllGroups: include_all_groups,
     });
+    if (include_monthly_searches !== true) {
+      stripMonthlySeries(result);
+    }
 
     return {
       content: [
