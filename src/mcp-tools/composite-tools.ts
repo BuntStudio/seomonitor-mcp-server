@@ -272,7 +272,7 @@ export class CompositeTools {
       name: 'seomonitor_find_keywords',
       title: 'Find Keywords',
       annotations: { title: 'Find Keywords', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Filter keywords across the entire tracked set and return an exact count plus matched rows. Use for "how many keywords..." and whole-campaign filtered questions where paged results from seomonitor_get_keyword_data would give "first page only" answers. Rows come back in a stable order and limit/offset page through the matched set, so advancing offset by "returned" while has_more is true reaches further rows without repeats — no dedup pass needed. Note "returned" can be below the requested limit when a full page would not fit the response budget; trust "returned", not "limit".',
+      description: 'Filter keywords across the entire tracked set and return an exact count plus matched rows. Use for "how many keywords..." and whole-campaign filtered questions where paged results from seomonitor_get_keyword_data would give "first page only" answers. The scanned set includes close variations (rows with main_keyword_id set), which the app\'s Strategy-page cards do NOT count — pass only_main_keywords:true whenever comparing a count against the app or an unfiltered count will read higher (e.g. 330 vs the card\'s 285). Rows come back in a stable order and limit/offset page through the matched set, so advancing offset by "returned" while has_more is true reaches further rows without repeats — no dedup pass needed. Note "returned" can be below the requested limit when a full page would not fit the response budget; trust "returned", not "limit".',
       inputSchema: {
         type: 'object',
         properties: {
@@ -291,6 +291,7 @@ export class CompositeTools {
           ais_presence: { type: 'boolean', description: 'Optional: Filter by AI Search presence/citations across ChatGPT/Gemini/Perplexity' },
           in_aio: { type: 'boolean', description: 'Optional: Keep keywords where ANY brand is named in the AI Overview — not necessarily this campaign\'s brand. Like every AIO/AIS filter here it reads the state as of the window\'s end date, not per-date history, so the matched count does not change with the range; for per-date AIO history use seomonitor_get_daily_keyword_ranks_ai_overview' },
           in_ai_search: { type: 'boolean', description: 'Optional: Filter by AI Search brand presence across ChatGPT/Perplexity/Gemini' },
+          only_main_keywords: { type: 'boolean', description: 'Optional: true drops close variations (rows whose main_keyword_id is set) so counts match the app, whose Strategy-page cards count main keywords only. Default false — the full listing includes close variations, so an unfiltered count reads higher than the app card' },
           group_id: { type: 'string', description: 'Optional: Keyword group ID' },
           device: { type: 'string', enum: [...DEVICE_VALUES], description: 'Optional: Device for rank/SERP/AIO filters. Default desktop. The campaign may track this device to a shallower depth than the other — check primary_device and max_tracked_position_desktop/mobile from seomonitor_get_tracked_campaigns before reading a device comparison' },
           limit: { type: 'integer', description: 'Optional: Max matched rows to return per page. Default 50, max 100' },
@@ -492,6 +493,7 @@ export class CompositeTools {
     const aisPresence = asBoolean(args.ais_presence);
     const inAio = asBoolean(args.in_aio);
     const inAiSearch = asBoolean(args.in_ai_search);
+    const onlyMainKeywords = asBoolean(args.only_main_keywords);
     // The API reports "not ranking" as the tracked depth cap (e.g. 101), so the
     // max observed rank marks the not-ranking sentinel.
     const capRank = rows.reduce((m: number, k: any) => {
@@ -503,6 +505,10 @@ export class CompositeTools {
     const isRanking = (r: unknown) => typeof r === 'number' && r < capRank;
 
     const matched = rows.filter((k: any) => {
+      // Close variations carry their parent's id in main_keyword_id; the app's
+      // Strategy-page cards count main keywords only, so this filter is what
+      // makes counts app-comparable.
+      if (onlyMainKeywords === true && k.main_keyword_id != null) return false;
       if (intent && k.search_intent !== intent) return false;
       const r = rankOf(k);
       if (notRanking === true && isRanking(r)) return false;

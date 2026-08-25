@@ -14,7 +14,7 @@ export class RankTrackingTools {
       name: 'seomonitor_get_keyword_data',
       title: 'Get Keyword Data',
       annotations: { title: 'Get Keyword Data', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Get keyword metrics and rankings from SEOMonitor, one page at a time. For counts or for listing a filtered subset, prefer seomonitor_find_keywords, which scans the whole set once and pages it safely. Desktop and mobile are often tracked to different depths on the same campaign — read primary_device and max_tracked_position_desktop/mobile from seomonitor_get_tracked_campaigns before comparing the two, or a device that simply stops being tracked at position 20 will look like it is performing badly.',
+      description: 'Get keyword metrics and rankings from SEOMonitor, one page at a time. For counts or for listing a filtered subset, prefer seomonitor_find_keywords, which scans the whole set once and pages it safely. Rows include close variations (main_keyword_id set to the parent keyword; null on main keywords) which the app\'s Strategy-page cards do not count — filter on main_keyword_id when reconciling counts with the app. Desktop and mobile are often tracked to different depths on the same campaign — read primary_device and max_tracked_position_desktop/mobile from seomonitor_get_tracked_campaigns before comparing the two, or a device that simply stops being tracked at position 20 will look like it is performing badly.',
       inputSchema: {
         type: 'object',
         properties: {
