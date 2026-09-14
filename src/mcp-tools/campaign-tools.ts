@@ -13,7 +13,7 @@ export class CampaignTools {
       name: 'seomonitor_get_tracked_campaigns',
       title: 'Get Tracked Campaigns',
       annotations: { title: 'Get Tracked Campaigns', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Retrieve active tracked campaigns with details from SEOMonitor dashboard. Call this before interpreting any rank or device comparison: campaign_info carries primary_device plus max_tracked_position_desktop and max_tracked_position_mobile, and the two devices are frequently tracked to different depths (e.g. primary mobile to 100, desktop only to 20). A keyword sitting at the shallower device\'s cap is untracked beyond that point, NOT a rank of that value — never read it as the device performing badly.',
+      description: 'Retrieve active tracked campaigns with details from SEOMonitor dashboard. PAGINATED: the API returns 10 rows unless you pass limit (max 100). To list an account, ALWAYS call with limit 100 and offset 0, then repeat with offset advanced by 100 until a call returns fewer than 100 rows — only then is the list complete. Without company_id the list spans every company the key can access (each row carries campaign_info.company and company_id); pass company_id to restrict to one. Call this before interpreting any rank or device comparison: campaign_info carries primary_device plus max_tracked_position_desktop and max_tracked_position_mobile, and the two devices are frequently tracked to different depths (e.g. primary mobile to 100, desktop only to 20). A keyword sitting at the shallower device\'s cap is untracked beyond that point, NOT a rank of that value — never read it as the device performing badly.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -30,11 +30,11 @@ export class CampaignTools {
           },
           limit: {
             type: 'integer',
-            description: 'Optional: Max 100 records per request. DEFAULT IS 10 — always pass an explicit limit and page with offset when listing an account, or 10 campaigns will look like the whole list',
+            description: 'Max 100 records per request. DEFAULT IS 10 — always pass 100 when listing an account, or 10 campaigns will look like the whole list',
           },
           offset: {
             type: 'integer',
-            description: 'Optional: Pagination offset',
+            description: 'Pagination offset. Advance by limit (100) on each call until a page returns fewer than limit rows',
           },
         },
         required: [],
