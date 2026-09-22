@@ -30,6 +30,17 @@ function extractApiKey(req: Request): string | undefined {
   return undefined;
 }
 
+// The setup URLs we publish carry a stand-in where the key belongs. Pasted
+// verbatim it reaches us as a key and every call comes back "invalid
+// authentication", which reads as a broken connector rather than an unfinished
+// one, and the client retries. Angle brackets and quotes are stripped first so
+// the bracketed form documented for the key path lands here too.
+const PLACEHOLDER_KEY = /^(your[_-]?)?(seomonitor[_-]?)?api[_-]?key([_-]?here)?$/i;
+
+function isPlaceholderKey(apiKey: string): boolean {
+  return PLACEHOLDER_KEY.test(apiKey.replace(/^[<"']+|[>"']+$/g, '').trim());
+}
+
 function jsonRpcError(res: Response, httpStatus: number, code: number, message: string) {
   res.status(httpStatus).json({
     jsonrpc: '2.0',
@@ -112,6 +123,20 @@ export class HttpTransport {
       if (!apiKey) {
         res.setHeader('WWW-Authenticate', `Bearer resource_metadata="${resourceMetadataUrl}"`);
         jsonRpcError(res, 401, -32001, 'Missing SEOmonitor API key. Provide it as a Bearer token or in the connector URL: https://<host>/{API_KEY}/mcp');
+        return;
+      }
+
+      if (isPlaceholderKey(apiKey)) {
+        logger.warn('Placeholder API key rejected', {
+          apiKey: maskKey(apiKey),
+          method: req.body?.method,
+        });
+        jsonRpcError(
+          res,
+          401,
+          -32001,
+          `Replace the placeholder with your API key (Account → Edit profile → API key), or sign in instead: ${MARKETING_URL}`,
+        );
         return;
       }
 
