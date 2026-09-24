@@ -135,12 +135,21 @@ export class SEOMonitorClient {
         // .response attached — call sites branch on e.response.status.
         const status = error.response?.status;
         const apiError = error.response?.data?.error;
-        const apiMessage = typeof apiError?.message === 'string' ? apiError.message : null;
+        // Most endpoints send { error: { message, details } }; some older ones
+        // send { error: 'Articles not found!' }.
+        const apiMessage = typeof apiError?.message === 'string'
+          ? apiError.message
+          : (typeof apiError === 'string' ? apiError : null);
         if (status && apiMessage) {
+          // 422 validation details come keyed by field: { article_id: ['...'] }.
           const rawDetails = apiError?.details;
           const details = Array.isArray(rawDetails)
             ? rawDetails.filter((d: any) => typeof d === 'string').join('; ')
-            : (typeof rawDetails === 'string' ? rawDetails : '');
+            : (typeof rawDetails === 'string'
+              ? rawDetails
+              : (rawDetails && typeof rawDetails === 'object'
+                ? Object.values(rawDetails).flat().filter((d: any) => typeof d === 'string').join('; ')
+                : ''));
           const enriched: any = new Error(
             `SEOmonitor API returned HTTP ${status}: ${apiMessage}${details ? ` — ${details}` : ''}`,
           );
@@ -1079,6 +1088,15 @@ export class SEOMonitorClient {
     if (options?.articleId) params.append('article_id', options.articleId);
 
     const response = await this.client.get(`/ai-writer/v3.0/article?${params}`);
+    return response.data;
+  }
+
+  // List a campaign's articles
+  async getArticleList(campaignId: string): Promise<any> {
+    const params = new URLSearchParams();
+    params.append('campaign_id', campaignId);
+
+    const response = await this.client.get(`/ai-writer/v3.0/articles?${params}`);
     return response.data;
   }
 

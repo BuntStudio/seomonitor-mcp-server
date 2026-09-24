@@ -59,8 +59,8 @@ export async function fetchAisEnablement(
     enabled_providers: enabledProviders,
     requested_provider_enabled: requested && Array.isArray(enabledProviders) ? enabledProviders.includes(requested) : null,
     note: Array.isArray(enabledProviders) && enabledProviders.length === 0
-      ? 'This campaign has no AI Search engine enabled — an empty or zero series means NOT TRACKED, never zero visibility. Say that.'
-      : 'If the series is empty or zero, check enabled_providers first: an engine that is not enabled is untracked, not absent from AI answers.',
+      ? 'This campaign has no AI Search engine enabled, so an empty or zero series means not tracked, not zero visibility.'
+      : 'An engine missing from enabled_providers is not tracked, so an empty or zero series for it means untracked, not absent from AI answers.',
   };
 }
 
@@ -75,7 +75,7 @@ export class AiSearchTools {
       name: 'seomonitor_get_keyword_ai_search_data',
       title: 'Get Keyword AI Search Data',
       annotations: { title: 'Get Keyword AI Search Data', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Per-keyword AI Search (AIS) data: whether the brand was NAMED in the answer (my_brand_present), which URLs were CITED as sources (citations), and the tracked domain\'s citation rank. Naming and citing are independent signals — report them separately, never as one "presence" number. The answer text is empty by default; set include_raw_content to get it where it exists.',
+      description: 'Per-keyword AI Search (AIS) data: whether the brand was NAMED in the answer (my_brand_present), which URLs were CITED as sources (citations), and the tracked domain\'s citation rank. Naming and citing are independent signals, not one presence measure. The answer text is empty by default; include_raw_content returns it where it exists.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -152,7 +152,7 @@ export class AiSearchTools {
       name: 'seomonitor_get_daily_group_ai_search_brand_mentions',
       title: 'Get Daily Group AI Search Brand Mentions',
       annotations: { title: 'Get Daily Group AI Search Brand Mentions', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Daily group visibility for brand mentions inside AI Search (AIS) results. Returns one brand_presence_visibility score per date (a single value — no desktop/mobile split, unlike the AI Overview visibility tools). An untracked engine returns empty/zero without error: report that as "not tracked", never as zero visibility.',
+      description: 'Daily group visibility for brand mentions inside AI Search (AIS) results. Returns one brand_presence_visibility score per date (a single value, with no desktop/mobile split, unlike the AI Overview visibility tools). An untracked engine returns empty or zero without error, so an empty or zero series can mean the engine is not tracked rather than zero visibility.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -175,7 +175,7 @@ export class AiSearchTools {
       name: 'seomonitor_get_daily_group_ai_search_site_citations',
       title: 'Get Daily Group AI Search Site Citations',
       annotations: { title: 'Get Daily Group AI Search Site Citations', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Daily group visibility for site citations inside AI Search (AIS) results. Returns one source_citation_visibility score per date (a single value — no desktop/mobile split, unlike the AI Overview visibility tools). An untracked engine returns empty/zero without error: report that as "not tracked", never as zero visibility.',
+      description: 'Daily group visibility for site citations inside AI Search (AIS) results. Returns one source_citation_visibility score per date (a single value, with no desktop/mobile split, unlike the AI Overview visibility tools). An untracked engine returns empty or zero without error, so an empty or zero series can mean the engine is not tracked rather than zero visibility.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -245,8 +245,8 @@ export class AiSearchTools {
       requested_provider_enabled: requested && Array.isArray(enabledProviders) ? enabledProviders.includes(requested) : null,
       keywords_returned: rows.length,
       note: Array.isArray(enabledProviders) && enabledProviders.length === 0
-        ? 'This campaign has no AI Search engine enabled, so there is nothing to report — say that rather than reporting zero visibility.'
-        : 'If requested_provider_enabled is false, this engine is not tracked on this campaign: an empty or low result means untracked, not absent from AI answers.',
+        ? 'This campaign has no AI Search engine enabled, so there is no AI Search data for it.'
+        : 'requested_provider_enabled false means this engine is not tracked on this campaign, so an empty or low result means untracked, not absent from AI answers.',
     };
 
     if (include_raw_content !== true) {

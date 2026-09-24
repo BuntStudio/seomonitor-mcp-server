@@ -1,6 +1,26 @@
 import { SEOMonitorClient } from '../clients/seomonitor-client.js';
 
 /**
+ * Merge consecutive days whose data is identical into one { from, to, ... }
+ * period. AIO links and SERP features rarely change day to day, so a 28-day
+ * window repeats the same record ~28 times per keyword and device.
+ */
+function collapseUnchangedDays(days: Array<{ date: string; [key: string]: any }>): any[] {
+  const periods: any[] = [];
+  let previous: string | null = null;
+  for (const { date, ...rest } of [...days].sort((a, b) => a.date.localeCompare(b.date))) {
+    const signature = JSON.stringify(rest);
+    if (signature === previous) {
+      periods[periods.length - 1].to = date;
+    } else {
+      periods.push({ from: date, to: date, ...rest });
+      previous = signature;
+    }
+  }
+  return periods;
+}
+
+/**
  * Advanced Rank Tracking Tools - Phase 3 Implementation
  * SERP features, competition analysis, and advanced ranking data
  */
@@ -67,7 +87,7 @@ export class RankAdvancedTools {
       name: 'seomonitor_get_serp_feature_presence',
       title: 'Get SERP Feature Presence',
       annotations: { title: 'Get SERP Feature Presence', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'SERP feature tracking over time',
+      description: 'SERP feature presence per keyword over time, on desktop and mobile. Consecutive days with identical features are merged into one period: serp_data is a list of { from, to, desktop, mobile } entries.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -159,7 +179,7 @@ export class RankAdvancedTools {
       name: 'seomonitor_get_keyword_ai_overview',
       title: 'Get Keyword AI Overview',
       annotations: { title: 'Get Keyword AI Overview', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'AI Overview presence data for keywords',
+      description: 'AI Overview presence per keyword over time: cited links, whether the brand is present, and the AI Overview rank. Consecutive days with identical data are merged into one period: sge_widget_data.<device> is a list of { from, to, links, brand_presence, brand_presence_any, rank } entries.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -193,7 +213,7 @@ export class RankAdvancedTools {
           },
           include_raw_content: {
             type: 'boolean',
-            description: 'Optional: return the stored AI Overview answer for each record (sends skip_html=false). The content field is rendered HTML and dominates the payload (~90% of each record), so leave it off unless the answer text itself is needed — links, brand_presence and rank are always returned.',
+            description: 'Optional: return the stored AI Overview answer for each record (sends skip_html=false). The content field is rendered HTML and dominates the payload (~90% of each record); links, brand_presence and rank are returned without it.',
           },
         },
         required: ['campaign_id', 'start_date', 'end_date'],
@@ -209,7 +229,7 @@ export class RankAdvancedTools {
       name: 'seomonitor_get_ranking_pages',
       title: 'Get Ranking Pages',
       annotations: { title: 'Get Ranking Pages', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Landing pages currently ranking, with the keywords each page ranks for. CURRENT SNAPSHOT ONLY — the endpoint has no date parameters and always reflects today; it cannot compare periods or show historical landing-page changes, so never present its output as belonging to a requested timeframe.',
+      description: 'Landing pages currently ranking, with the keywords each page ranks for. Current snapshot only: the endpoint has no date parameters and always reflects today, so it cannot compare periods or show historical landing-page changes.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -415,11 +435,25 @@ export class RankAdvancedTools {
       skipHtml: include_raw_content === true ? false : true,
     });
 
+    const collapsed = Array.isArray(result)
+      ? result.map((row: any) => {
+        const devices = row?.sge_widget_data;
+        if (!devices || typeof devices !== 'object') return row;
+        const byDevice: Record<string, any> = {};
+        for (const [device, days] of Object.entries(devices)) {
+          byDevice[device] = days && typeof days === 'object' && !Array.isArray(days)
+            ? collapseUnchangedDays(Object.entries(days as Record<string, any>).map(([date, day]) => ({ ...day, date })))
+            : days;
+        }
+        return { ...row, sge_widget_data: byDevice };
+      })
+      : result;
+
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(result, null, 2),
+          text: JSON.stringify(collapsed),
         },
       ],
     };
@@ -506,11 +540,17 @@ export class RankAdvancedTools {
       offset,
     });
 
+    const collapsed = Array.isArray(result)
+      ? result.map((row: any) => Array.isArray(row?.serp_data)
+        ? { ...row, serp_data: collapseUnchangedDays(row.serp_data) }
+        : row)
+      : result;
+
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(result, null, 2),
+          text: JSON.stringify(collapsed),
         },
       ],
     };

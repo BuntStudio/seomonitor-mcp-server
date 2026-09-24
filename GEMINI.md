@@ -1,6 +1,6 @@
 # SEOmonitor extension
 
-This extension connects to the hosted SEOmonitor MCP server (`mcp.seomonitor.com`) and exposes 50 read-only tools over the user's SEOmonitor account: rank tracking, AI Overview and AI search visibility, keyword research, organic traffic, and forecasts.
+This extension connects to the hosted SEOmonitor MCP server (`mcp.seomonitor.com`) and exposes 49 read-only tools over the user's SEOmonitor account: rank tracking, AI Overview and AI search visibility, keyword research, organic traffic, and forecasts.
 
 ## Setup
 

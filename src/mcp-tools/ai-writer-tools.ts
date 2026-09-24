@@ -11,12 +11,12 @@ export class AiWriterTools {
       name: 'seomonitor_get_article_content',
       title: 'Get Article Content',
       annotations: { title: 'Get Article Content', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Get current Article content (Outline, AI Version, Working Draft and Live version)',
+      description: 'AI Writer articles for a campaign. Without article_id it lists the campaign\'s articles (article_id, topic, status, created_at); with article_id it returns that article\'s content (Outline, AI Version, Working Draft and Live version).',
       inputSchema: {
         type: 'object',
         properties: {
           campaign_id: { type: 'string', description: 'Required campaign ID' },
-          article_id: { type: 'string', description: 'Optional: Specific article ID. Omitted = all the campaign\'s articles' },
+          article_id: { type: 'string', description: 'Optional: Article ID from the list this tool returns without it' },
         },
         required: ['campaign_id'],
       },
@@ -104,15 +104,17 @@ export class AiWriterTools {
     const writeEnabled = process.env.MCP_ENABLE_WRITE_TOOLS === 'true';
     return [
       this.getArticleContentDefinition(),
-      ...(writeEnabled ? [this.getGenerateArticlesDefinition()] : []),
-      this.getGenerationStatusDefinition(),
+      // Status only polls requests made by generate_articles, so it ships with it.
+      ...(writeEnabled ? [this.getGenerateArticlesDefinition(), this.getGenerationStatusDefinition()] : []),
       this.getTopicRecommendationsDefinition(),
     ];
   }
 
   static async executeGetArticleContent(args: any, seoClient: SEOMonitorClient) {
     const { campaign_id, article_id } = args;
-    const result = await seoClient.getArticleContent(campaign_id, { articleId: article_id });
+    const result = article_id
+      ? await seoClient.getArticleContent(campaign_id, { articleId: article_id })
+      : await seoClient.getArticleList(campaign_id);
     return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
   }
 
@@ -126,6 +128,9 @@ export class AiWriterTools {
   }
 
   static async executeGetGenerationStatus(args: any, seoClient: SEOMonitorClient) {
+    if (process.env.MCP_ENABLE_WRITE_TOOLS !== 'true') {
+      throw new Error('seomonitor_get_generation_status is disabled on this server (read-only beta surface)');
+    }
     const { request_id } = args;
     const result = await seoClient.getGenerationStatus(request_id);
     return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };

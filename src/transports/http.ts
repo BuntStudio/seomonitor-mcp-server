@@ -123,7 +123,7 @@ export class HttpTransport {
       const apiKey = extractApiKey(req);
       if (!apiKey) {
         res.setHeader('WWW-Authenticate', `Bearer resource_metadata="${resourceMetadataUrl}"`);
-        jsonRpcError(res, 401, -32001, 'Missing SEOmonitor API key. Provide it as a Bearer token or in the connector URL: https://<host>/{API_KEY}/mcp');
+        jsonRpcError(res, 401, -32001, `Sign in required. Connect this server at ${publicUrl} with an OAuth-capable MCP client and sign in with your SEOmonitor account. Setup guide: ${MARKETING_URL}`);
         return;
       }
 
@@ -136,7 +136,7 @@ export class HttpTransport {
           res,
           401,
           -32001,
-          `Replace the placeholder with your API key (Account → Edit profile → API key), or sign in instead: ${MARKETING_URL}`,
+          `The connector URL still holds a placeholder instead of a key. Connect ${publicUrl} and sign in with your SEOmonitor account instead. Setup guide: ${MARKETING_URL}`,
         );
         return;
       }

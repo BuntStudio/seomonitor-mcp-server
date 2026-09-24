@@ -11,7 +11,7 @@ export class VisibilityTools {
       name: 'seomonitor_get_daily_share_of_clicks',
       title: 'Get Daily Share Of Clicks',
       annotations: { title: 'Get Daily Share Of Clicks', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Daily estimated share of organic clicks for the campaign domain vs competitors',
+      description: 'Daily estimated share of organic clicks for the campaign domain vs competitors. end_date can be at most 15 days after start_date; longer periods need several calls.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -32,7 +32,7 @@ export class VisibilityTools {
       name: 'seomonitor_get_share_of_voice',
       title: 'Get Share Of Voice',
       annotations: { title: 'Get Share Of Voice', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Share of Voice on a given date for the campaign domain and its competitors. SINGLE-DAY SNAPSHOT: the endpoint takes one date, not a range, and these metrics can swing widely within a month — to describe a period, sample several dates and report the spread, never present one day as "the position". The platform UI shows the CLOSING day of its selected timeframe, so to reconcile with the app pass that end date. Reading the payload: (1) each block counts a different competitor set — organic_share_of_voice ranks ALL domains found in the SERPs (see competitors_number), while ai_overview_share_of_voice covers ONLY the competitors configured on the campaign, so their percentages are not comparable; (2) ai_overview metrics per domain are appearance COUNTS, not percentages: brand_mentions (brand named in the AI Overview), brand_citations (page cited on a keyword whose AI Overview names a brand), website_citations (page cited with no brand named) — the buckets overlap (a cited-and-mentioned appearance counts in both mentions and citations), so quote total_appearances for "how often does this domain appear", never the sum of the three; (3) an empty ai_search_share_of_voice.domains with total_impression_score 0 usually means AI Search tracking is NOT enabled on the campaign — report it as "not tracked", not zero visibility; (4) AI Overview source data for a date keeps arriving for ~2 days after that date, so figures for the last 2 days are PROVISIONAL and repeated calls can legitimately differ — for settled numbers query a date at least 2 days back.',
+      description: 'Share of Voice on a given date for the campaign domain and its competitors. Single-day snapshot: the endpoint takes one date, not a range, and these metrics can swing widely within a month, so a period needs several sampled dates. The platform UI shows the closing day of its selected timeframe, so that end date reconciles with the app. Reading the payload: (1) each block counts a different competitor set: organic_share_of_voice ranks all domains found in the SERPs (see competitors_number), while ai_overview_share_of_voice covers only the competitors configured on the campaign, so their percentages are not comparable; (2) ai_overview metrics per domain are appearance counts, not percentages: brand_mentions (brand named in the AI Overview), brand_citations (page cited on a keyword whose AI Overview names a brand), website_citations (page cited with no brand named). The buckets overlap (a cited-and-mentioned appearance counts in both mentions and citations), so total_appearances, not the sum of the three, is how often a domain appears; (3) an empty ai_search_share_of_voice.domains with total_impression_score 0 usually means AI Search tracking is not enabled on the campaign; (4) AI Overview source data for a date keeps arriving for about 2 days after that date, so figures for the last 2 days are provisional and repeated calls can differ; dates at least 2 days back are settled.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -114,7 +114,7 @@ export class VisibilityTools {
       if (ais && typeof ais === 'object'
         && (!Array.isArray(ais.domains) || ais.domains.length === 0)
         && !(ais.total_impression_score > 0)) {
-        ais.status = 'AI Search is likely NOT TRACKED on this campaign (no domains, zero impression score) — report it as untracked, never as zero visibility';
+        ais.status = 'AI Search is likely NOT TRACKED on this campaign (no domains, zero impression score), so zero here means untracked, not zero visibility';
       }
     }
     return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };

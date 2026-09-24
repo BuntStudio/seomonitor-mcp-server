@@ -3,28 +3,26 @@
 The official **Model Context Protocol (MCP) server** for [SEOmonitor](https://www.seomonitor.com) — connect Claude, ChatGPT, Gemini CLI, or any MCP-compatible client to your SEO data: rank tracking, AI visibility (AI Overviews & AI search), keyword research, organic traffic, and forecasts.
 
 **Hosted server:** `https://mcp.seomonitor.com` (Streamable HTTP) — no install needed.
-Setup guide: [mcp.seomonitor.com](https://mcp.seomonitor.com)
+Setup guide: [www.seomonitor.com/mcp](https://www.seomonitor.com/mcp)
 
 ---
 
 ## 🚀 Quick Start (hosted — recommended)
 
-You need a **SEOmonitor API key**: in the app, go to **Account → Edit profile → API key**.
+You sign in with your SEOmonitor account. There is no API key to copy.
 
 ### Claude (custom connector)
-Settings → Connectors → **Add custom connector**, then use:
+1. Settings → Connectors → **Add custom connector**.
+2. Name it **SEOmonitor** and use:
+   ```
+   https://mcp.seomonitor.com
+   ```
+3. Click **Connect**, sign in with your SEOmonitor account, choose the account Claude may read and approve read access.
 
-```
-https://mcp.seomonitor.com/YOUR_API_KEY/mcp
-```
+### Any Streamable HTTP client with OAuth
+Point the client at `https://mcp.seomonitor.com`. The server answers unauthenticated requests with a `401` and a `WWW-Authenticate` header pointing at its [protected-resource metadata](https://mcp.seomonitor.com/.well-known/oauth-protected-resource); the client discovers `auth.seomonitor.com` from there and runs the sign-in.
 
-### Any Streamable HTTP client
-```
-POST https://mcp.seomonitor.com/mcp
-Authorization: Bearer YOUR_API_KEY
-```
-
-Both forms hit the same server; use whichever your client supports. Rate limit: **60 requests/minute per API key** (burst 30) — over-limit calls get HTTP 429 with `Retry-After`.
+Rate limit: **60 requests/minute per access token** (burst 30) — over-limit calls get HTTP 429 with `Retry-After`.
 
 ### Gemini CLI
 ```bash
@@ -146,26 +144,27 @@ Every tool is **read-only** — the server retrieves data from your SEOmonitor a
 - `seomonitor_get_keyword_vault_overview`
 - `seomonitor_get_vault_lists`
 
-### Content / AI Writer (3)
+### Content / AI Writer (2)
 - `seomonitor_get_article_content`
-- `seomonitor_get_generation_status`
 - `seomonitor_get_topic_recommendations`
 
-### Insights & Composite (6)
+### Insights & Composite (7)
 - `seomonitor_get_top_keywords`
 - `seomonitor_find_keywords`
 - `seomonitor_get_top_ai_search_keywords`
 - `seomonitor_get_campaign_widgets`
 - `seomonitor_get_ai_search_engine_performance`
 - `seomonitor_get_top_cited_landing_pages`
+- `seomonitor_get_ai_search_positioning`
 
-> Two write tools (`seomonitor_generate_articles`, `seomonitor_add_keywords`) exist in the codebase but are **disabled by default** (`MCP_ENABLE_WRITE_TOOLS`). The public hosted server does not expose them.
+> Two write tools (`seomonitor_generate_articles`, `seomonitor_add_keywords`) and the generation status poller (`seomonitor_get_generation_status`) exist in the codebase but are **disabled by default** (`MCP_ENABLE_WRITE_TOOLS`). The public hosted server does not expose them.
 
 ---
 
 ## 🔐 Authentication & Privacy
 
-- **API key** — passed as a Bearer token or in the connector URL. The key is the API token from your SEOmonitor profile; regenerating it there invalidates the old one.
+- **Sign-in (OAuth 2.1)** — the hosted server authenticates through `auth.seomonitor.com`. You approve read access for one account, and you can withdraw it at any time under **Account → Edit profile → Connected Apps**.
+- **API key (local stdio only)** — the local server reads `SEOMONITOR_API_KEY`, the API token from your SEOmonitor profile.
 - The hosted server is **stateless**: it forwards each request to the SEOmonitor API with your key and does not store your data.
 - **Privacy policy:** [SEOmonitor Privacy Policy](https://help.seomonitor.com/en/articles/2285725-seomonitor-privacy-policy)
 - Support: [GitHub Issues](https://github.com/BuntStudio/seomonitor-mcp-server/issues) or support@seomonitor.com
@@ -211,8 +210,8 @@ src/
 
 ## 🔧 Troubleshooting
 
-- **Client doesn't load tools**: check the URL/API key; for stdio, rebuild `dist/` and restart the client.
-- **401 errors**: the API key is missing or was regenerated — copy the current one from your profile.
+- **Client doesn't load tools**: check the connector URL is `https://mcp.seomonitor.com` and that sign-in completed; for stdio, rebuild `dist/` and restart the client.
+- **401 errors**: the sign-in expired or access was withdrawn — reconnect the connector. For stdio, check `SEOMONITOR_API_KEY`.
 - **429 errors**: you're over 60 requests/minute for your key; back off per the `Retry-After` header.
 - **Debug logging**: `npm start -- --log-level debug`
 
@@ -220,7 +219,7 @@ src/
 
 ## 📚 Resources
 
-- [Hosted server & setup guide](https://mcp.seomonitor.com)
+- [Setup guide](https://www.seomonitor.com/mcp)
 - [SEOmonitor API docs](https://api-docs.seomonitor.com)
 - [MCP specification](https://modelcontextprotocol.io)
 - [GitHub Issues](https://github.com/BuntStudio/seomonitor-mcp-server/issues)

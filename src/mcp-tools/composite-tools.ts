@@ -272,7 +272,7 @@ export class CompositeTools {
       name: 'seomonitor_find_keywords',
       title: 'Find Keywords',
       annotations: { title: 'Find Keywords', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Filter keywords across the entire tracked set and return an exact count plus matched rows. Use for "how many keywords..." and whole-campaign filtered questions where paged results from seomonitor_get_keyword_data would give "first page only" answers. The scanned set includes close variations (rows with main_keyword_id set), which the app\'s Strategy-page cards do NOT count — pass only_main_keywords:true whenever comparing a count against the app or an unfiltered count will read higher (e.g. 330 vs the card\'s 285). Rows come back in a stable order and limit/offset page through the matched set, so advancing offset by "returned" while has_more is true reaches further rows without repeats — no dedup pass needed. Note "returned" can be below the requested limit when a full page would not fit the response budget; trust "returned", not "limit".',
+      description: 'Filter keywords across the entire tracked set and return an exact count plus matched rows. Suited to "how many keywords..." and whole-campaign filtered questions where paged results from seomonitor_get_keyword_data would give "first page only" answers. The scanned set includes close variations (rows with main_keyword_id set), which the app\'s Strategy-page cards do NOT count — only_main_keywords:true matches the app\'s count; an unfiltered count reads higher (e.g. 330 vs the card\'s 285). Rows come back in a stable order and limit/offset page through the matched set, so advancing offset by "returned" while has_more is true reaches further rows without repeats. "returned" can be below the requested limit when a full page would not fit the response budget.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -295,7 +295,7 @@ export class CompositeTools {
           group_id: { type: 'string', description: 'Optional: Keyword group ID' },
           device: { type: 'string', enum: [...DEVICE_VALUES], description: 'Optional: Device for rank/SERP/AIO filters. Default desktop. The campaign may track this device to a shallower depth than the other — check primary_device and max_tracked_position_desktop/mobile from seomonitor_get_tracked_campaigns before reading a device comparison' },
           limit: { type: 'integer', description: 'Optional: Max matched rows to return per page. Default 50, max 100' },
-          offset: { type: 'integer', description: 'Optional: Row offset into the matched set. Default 0. Rows come back in a stable order, so advancing offset by "returned" never repeats or skips a keyword. Each call re-scans the campaign, so use it to reach a specific slice or to walk a modest set — for a long listing, narrow with group_id/filters first' },
+          offset: { type: 'integer', description: 'Optional: Row offset into the matched set. Default 0. Rows come back in a stable order, so advancing offset by "returned" never repeats or skips a keyword. Each call re-scans the campaign, so it suits reaching a specific slice or walking a modest set; group_id and filters narrow a long listing' },
           order_by: { type: 'string', enum: [...FIND_ORDER_FIELDS], description: 'Optional: Sort the matched set before paging. Default is by keyword_id (stable, arbitrary)' },
           order_direction: { type: 'string', enum: ['asc', 'desc'], description: 'Optional: Sort direction for order_by. Default desc. Keywords with no value sort last either way' },
           ...DATE_RANGE_SCHEMA,
@@ -310,7 +310,7 @@ export class CompositeTools {
       name: 'seomonitor_get_top_ai_search_keywords',
       title: 'Get Top AI Search Keywords',
       annotations: { title: 'Get Top AI Search Keywords', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Top keywords where a brand is present in AI Search across ChatGPT/Perplexity/Gemini. Scans the full tracked set and sorts by search volume. Use only_my_brand:false for any-brand presence, competitor/source gaps, or "other brands present but not us" discovery. Each row includes keyword_id; carry those IDs into seomonitor_get_keyword_ai_search_data or seomonitor_get_top_cited_landing_pages for follow-up evidence.',
+      description: 'Top keywords where a brand is present in AI Search across ChatGPT/Perplexity/Gemini. Scans the full tracked set and sorts by search volume. only_my_brand:false covers any-brand presence, competitor/source gaps, and "other brands present but not us" discovery. Each row includes keyword_id, which seomonitor_get_keyword_ai_search_data and seomonitor_get_top_cited_landing_pages accept for follow-up evidence.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -330,7 +330,7 @@ export class CompositeTools {
       name: 'seomonitor_get_campaign_widgets',
       title: 'Get Campaign Widgets',
       annotations: { title: 'Get Campaign Widgets', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Get campaign overview widgets in one call: organic/blended visibility, average Google rank, SERP-feature visibility breakdowns, AI Overview mention percent, AI Search mention percent, and organic/AIO/AIS share of voice with competitor domains. Two reading cautions: (1) the share_of_voice block is computed on DESKTOP (the underlying endpoint defaults to desktop and this tool does not pass a device) — on mobile-primary campaigns call seomonitor_get_share_of_voice with device=mobile instead of quoting this block; (2) feature_visibility_breakdown values are search-volume-weighted VISIBILITY scores per SERP feature, NOT the share of keywords that have the feature — do not read them as prevalence rates (count keywords via seomonitor_find_keywords filters for that). Use for high-level summaries only; for keyword rows use seomonitor_get_keyword_data/seomonitor_find_keywords/seomonitor_get_top_keywords, for per-engine AIS use seomonitor_get_ai_search_engine_performance, and for citation source/landing-page evidence use seomonitor_get_top_cited_landing_pages.',
+      description: 'Campaign overview widgets in one call: organic/blended visibility, average Google rank, SERP-feature visibility breakdowns, AI Overview mention percent, AI Search mention percent, and organic/AIO/AIS share of voice with competitor domains. The share_of_voice block is computed on desktop (the underlying endpoint defaults to desktop and this tool does not pass a device); seomonitor_get_share_of_voice with device=mobile gives the mobile figure. feature_visibility_breakdown values are search-volume-weighted visibility scores per SERP feature, not the share of keywords that have the feature; seomonitor_find_keywords filters count keywords per feature. Suited to high-level summaries. Keyword rows come from seomonitor_get_keyword_data, seomonitor_find_keywords and seomonitor_get_top_keywords, per-engine AI Search from seomonitor_get_ai_search_engine_performance, and citation source and landing-page evidence from seomonitor_get_top_cited_landing_pages.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -351,7 +351,7 @@ export class CompositeTools {
       name: 'seomonitor_get_ai_search_engine_performance',
       title: 'Get AI Search Engine Performance',
       annotations: { title: 'Get AI Search Engine Performance', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Compare brand performance across AI Search engines: ChatGPT (openai), Gemini, and Perplexity. Use first for any "ChatGPT vs Gemini vs Perplexity" question. Returns per-engine presence/citation trend summaries, each row filtered to that engine, plus enabled_providers/active_provider for the campaign. Every row carries an "enabled" flag: report engines with enabled:false as not tracked on this campaign, never as zero/poor visibility. Every row also carries "access": on access:not_entitled the account cannot read this engine at group level, so that row is empty for a reason unrelated to visibility — retry that engine with seomonitor_get_ai_search_positioning or seomonitor_get_keyword_ai_search_data (passing ai_search_llm), which are gated separately, before reporting anything about it.',
+      description: 'Compare brand performance across AI Search engines: ChatGPT (openai), Gemini, and Perplexity. Suited to "ChatGPT vs Gemini vs Perplexity" questions. Returns per-engine presence/citation trend summaries, each row filtered to that engine, plus enabled_providers/active_provider for the campaign. Every row carries an "enabled" flag: enabled:false means the campaign does not track that engine. Every row also carries "access": access:not_entitled means the account cannot read this engine at group level, so that row is empty for a reason unrelated to visibility. seomonitor_get_ai_search_positioning and seomonitor_get_keyword_ai_search_data (with ai_search_llm) are gated separately and may return data for that engine.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -370,7 +370,7 @@ export class CompositeTools {
       name: 'seomonitor_get_top_cited_landing_pages',
       title: 'Get Top Cited Landing Pages',
       annotations: { title: 'Get Top Cited Landing Pages', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'MANDATORY for any Google AI Overview or AI Search cited URL/source/domain/landing-page question: "which pages are cited", "where are we cited", "which sources are cited", "are our pages cited", or "citations for those keywords". The tool aggregates citation URLs from AIO/AIS keyword endpoints so large links arrays do not get scrubbed from model context. If the user says "those keywords", pass keyword_ids from the prior result. Use only_campaign_domain:false for all cited sources; use only_campaign_domain:true to check the tracked campaign domain. Do not claim citation URLs are unavailable until this tool has been tried.',
+      description: 'Cited pages and domains for Google AI Overview and AI Search, aggregated from the citation URLs in the keyword endpoints so large links arrays stay out of the response. Answers questions such as "which pages are cited", "where are we cited", "which sources are cited" and "are our pages cited". Accepts keyword_ids from a prior result to scope to those keywords. only_campaign_domain:false returns all cited sources; only_campaign_domain:true checks the tracked campaign domain.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -393,7 +393,7 @@ export class CompositeTools {
       name: 'seomonitor_get_ai_search_positioning',
       title: 'Get AI Search Positioning',
       annotations: { title: 'Get AI Search Positioning', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'The honest per-keyword AI Search picture in one call: for each keyword, was the brand NAMED in the answer, was one of our URLs CITED as a source, at what citation rank, and which competitor domains were cited alongside. Use this for "how are we positioned in AI Search", "are we mentioned or just cited", "who is cited instead of us". Naming and citing diverge constantly, so each keyword is bucketed as both / mentioned_not_cited / cited_not_mentioned / neither — never collapse them into one presence number. Does not return the answer text; use seomonitor_get_keyword_ai_search_data with include_raw_content for that.',
+      description: 'Per-keyword AI Search positioning in one call: for each keyword, whether the brand was NAMED in the answer, whether one of our URLs was CITED as a source, at what citation rank, and which competitor domains were cited alongside. Suited to "how are we positioned in AI Search", "are we mentioned or just cited" and "who is cited instead of us". Naming and citing diverge constantly, so each keyword is bucketed as both / mentioned_not_cited / cited_not_mentioned / neither. Does not return the answer text; seomonitor_get_keyword_ai_search_data with include_raw_content does.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -607,7 +607,7 @@ export class CompositeTools {
       order_direction: orderBy ? (descending ? 'desc' : 'asc') : 'asc',
       has_more: offset + page.length < matched.length,
       complete,
-      note: `Scanned ${rows.length} tracked keywords; ${matched.length} matched. Ranks are ${device} — check the campaign's primary_device and max_tracked_position_* from seomonitor_get_tracked_campaigns before comparing devices, because the secondary device is often tracked to a shallower depth. A rank of ${capRank === -Infinity ? 'n/a' : capRank} is treated as not ranking. To list every match, repeat this call with offset advanced by "returned" (which may be smaller than limit when a page would not fit the response budget) until has_more is false.`,
+      note: `Scanned ${rows.length} tracked keywords; ${matched.length} matched. Ranks are ${device}; the secondary device is often tracked to a shallower depth (primary_device and max_tracked_position_* in seomonitor_get_tracked_campaigns). A rank of ${capRank === -Infinity ? 'n/a' : capRank} is treated as not ranking. has_more stays true while matches remain beyond offset + returned; returned can be smaller than limit when a page would not fit the response budget.`,
       keywords: page,
     }), keywords);
   }
@@ -771,9 +771,9 @@ export class CompositeTools {
       enabled_providers: enabledProviders,
       active_provider: groupFirstForProviders?.ai_search?.active_provider ?? null,
       ignored_engines: ignoredEngines.length ? ignoredEngines : undefined,
-      note: 'openai maps to ChatGPT. Each engine row is filtered to that engine, so the numbers are genuinely per-engine, not blended. Read "enabled" first: enabled:false means the campaign does not track that engine, so whatever it reports is residual, not a live signal — say the engine is not tracked instead of reporting it as weak performance. enabled:null means the enablement list could not be read. Then read "access": ok means the numbers are real; not_entitled means this account cannot read the group-level figures for that engine, so its nulls and zeros carry no information — do not report them as visibility of any kind; error means the call failed for another reason, see that row\'s errors. Any name in ignored_engines was not queried at all.',
+      note: 'openai maps to ChatGPT. Each engine row is filtered to that engine, so the numbers are per-engine, not blended. enabled:false means the campaign does not track that engine, so its figures are residual, not a live signal. enabled:null means the enablement list could not be read. access:ok means the numbers are real; access:not_entitled means this account cannot read the group-level figures for that engine, so its nulls and zeros carry no information; access:error means the call failed for another reason (see that row\'s errors). Engines in ignored_engines were not queried.',
       retry_not_entitled_with: blockedEngines.length
-        ? { engines: blockedEngines, tools: ['seomonitor_get_ai_search_positioning', 'seomonitor_get_keyword_ai_search_data'], how: 'Call one of these per blocked engine with ai_search_llm set to that engine. They are gated separately from the group-level endpoints, so they often return data when this tool cannot. Only after they also fail should you tell the user the figures are unavailable for that engine.' }
+        ? { engines: blockedEngines, tools: ['seomonitor_get_ai_search_positioning', 'seomonitor_get_keyword_ai_search_data'], how: 'These tools take ai_search_llm set to the blocked engine. They are gated separately from the group-level endpoints and often return data for an engine this tool cannot read.' }
         : undefined,
       engines: engineRows,
       errors: groupData.error ? { group_data: String(groupData.error) } : undefined,
@@ -962,7 +962,7 @@ export class CompositeTools {
       returned: rowsPage.length,
       offset,
       has_more: offset + rowsPage.length < filtered.length,
-      note: 'mentioned = the brand was NAMED in the answer. cited = one of our URLs was listed as a source. They are independent: report both columns, never a single presence figure. main_domain_citation_rank 100 means the main domain was not among the top cited sources even when a subdomain URL was, so check our_cited_urls before calling it absent. competitor_domains_cited lists every non-campaign domain cited here, tracked competitor or not.',
+      note: 'mentioned = the brand was NAMED in the answer. cited = one of our URLs was listed as a source. The two are independent. main_domain_citation_rank 100 means the main domain was not among the top cited sources even when a subdomain URL was; our_cited_urls lists those URLs. competitor_domains_cited lists every non-campaign domain cited here, tracked competitor or not.',
       keywords: rowsPage,
     }), page, 32000);
   }

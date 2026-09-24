@@ -57,7 +57,7 @@ export class AiOverviewTools {
       name: 'seomonitor_get_daily_group_visibility_ai_overview_mentions',
       title: 'Get Daily Group Visibility AI Overview Mentions',
       annotations: { title: 'Get Daily Group Visibility AI Overview Mentions', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Daily group visibility for brand mentions inside AI Overview (AIO) results. Response per date: aio_mentions_visibility with separate desktop and mobile values, each a 0-1 fraction of the group\'s search volume (0.53 = 53% — always state which device you are quoting).',
+      description: 'Daily group visibility for brand mentions inside AI Overview (AIO) results. Response per date: aio_mentions_visibility with separate desktop and mobile values, each a 0-1 fraction of the group\'s search volume (0.53 = 53%).',
       inputSchema: {
         type: 'object',
         properties: {
@@ -80,7 +80,7 @@ export class AiOverviewTools {
       name: 'seomonitor_get_daily_group_visibility_ai_overview_citations',
       title: 'Get Daily Group Visibility AI Overview Citations',
       annotations: { title: 'Get Daily Group Visibility AI Overview Citations', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Daily group visibility for site citations inside AI Overview (AIO) results. Response per date: aio_citations_visibility with separate desktop and mobile values, each a 0-1 fraction of the group\'s search volume (0.53 = 53% — always state which device you are quoting).',
+      description: 'Daily group visibility for site citations inside AI Overview (AIO) results. Response per date: aio_citations_visibility with separate desktop and mobile values, each a 0-1 fraction of the group\'s search volume (0.53 = 53%).',
       inputSchema: {
         type: 'object',
         properties: {

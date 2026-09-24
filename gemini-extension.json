@@ -1,7 +1,7 @@
 {
   "name": "seomonitor",
   "version": "1.1.0",
-  "description": "SEOmonitor SEO data in Gemini CLI: rank tracking, AI Overview & AI search visibility, keyword research, organic traffic, and forecasts (50 read-only tools).",
+  "description": "SEOmonitor SEO data in Gemini CLI: rank tracking, AI Overview & AI search visibility, keyword research, organic traffic, and forecasts (49 read-only tools).",
   "contextFileName": "GEMINI.md",
   "mcpServers": {
     "seomonitor": {

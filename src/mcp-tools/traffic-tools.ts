@@ -13,7 +13,7 @@ export class TrafficTools {
       name: 'seomonitor_get_daily_traffic_data',
       title: 'Get Daily Traffic Data',
       annotations: { title: 'Get Daily Traffic Data', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Daily organic traffic metrics for a campaign. IMPORTANT: with no segment specified the API returns the NON-BRAND segment, not all traffic — pass segment=all for total organic.',
+      description: 'Daily organic traffic metrics for a campaign. With no segment specified the API returns the non-brand segment, not all traffic; segment=all returns total organic.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -47,7 +47,7 @@ export class TrafficTools {
       name: 'seomonitor_get_traffic_by_keywords',
       title: 'Get Traffic By Keywords',
       annotations: { title: 'Get Traffic By Keywords', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Keyword-level traffic attribution. IMPORTANT: with no segment specified the API returns the NON-BRAND segment, not all traffic — pass segment=all for total organic.',
+      description: 'Keyword-level traffic attribution. With no segment specified the API returns the non-brand segment, not all traffic; segment=all returns total organic.',
       inputSchema: {
         type: 'object',
         properties: {

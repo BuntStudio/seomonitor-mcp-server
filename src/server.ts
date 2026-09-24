@@ -191,7 +191,7 @@ export class MCPServer {
           return {
             content: [{
               type: 'text',
-              text: `No data available: ${errorMessage}. Nothing matches the requested criteria (campaign, dates, search term, or market) — retrying with the same arguments will not help.`,
+              text: `No data available: ${errorMessage.replace(/\.+$/, '')}. Nothing matches the requested criteria (campaign, dates, search term, or market) — retrying with the same arguments will not help.`,
             }],
           };
         }
