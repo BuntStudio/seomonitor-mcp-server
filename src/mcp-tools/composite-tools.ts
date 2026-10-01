@@ -16,7 +16,7 @@ const INTENT_VALUES = ['informational', 'commercial', 'transactional', 'navigati
 const DEVICE_VALUES = ['desktop', 'mobile'] as const;
 const TOP_KEYWORD_METRICS = ['volume', 'rank', 'opportunity', 'yoy', 'rank_trend'] as const;
 const DIRECTIONS = ['top', 'bottom'] as const;
-const AI_SEARCH_ENGINES = ['openai', 'gemini', 'perplexity'] as const;
+const AI_SEARCH_ENGINES = ['openai', 'gemini', 'perplexity', 'claude'] as const;
 const FIND_ORDER_FIELDS = ['search_volume', 'rank', 'opportunity', 'keyword'] as const;
 
 function defaultDateRange(): { startDate: string; endDate: string } {
@@ -183,7 +183,7 @@ const KEYWORD_FILTER_SCHEMA = {
   rank_band: { type: 'string', description: 'Optional: Google rank band filter, e.g. top_3, top_10, top_20, outside_top_20, not_ranking' },
   brand: { type: 'boolean', description: 'Optional: Filter brand-only keywords when true, non-brand keywords when false' },
   aio_presence: { type: 'boolean', description: 'Optional: Filter keywords where Google AI Overview is present on the SERP (SERP presence, not necessarily your brand citation)' },
-  ais_presence: { type: 'boolean', description: 'Optional: Filter keywords with AI Search presence/citations across ChatGPT, Gemini, or Perplexity' },
+  ais_presence: { type: 'boolean', description: 'Optional: Filter keywords with AI Search presence/citations across ChatGPT, Gemini, Perplexity, or Claude' },
 };
 
 const SEGMENT_FILTER_SCHEMA = {
@@ -288,9 +288,9 @@ export class CompositeTools {
           rank_band: { type: 'string', description: 'Optional: Rank band, e.g. top_3, top_10, top_20, outside_top_20, not_ranking' },
           brand: { type: 'boolean', description: 'Optional: Filter brand-only keywords when true, non-brand keywords when false' },
           aio_presence: { type: 'boolean', description: 'Optional: Filter by Google AI Overview SERP presence. Different from in_aio, which is brand presence in the AI Overview' },
-          ais_presence: { type: 'boolean', description: 'Optional: Filter by AI Search presence/citations across ChatGPT/Gemini/Perplexity' },
+          ais_presence: { type: 'boolean', description: 'Optional: Filter by AI Search presence/citations across ChatGPT/Gemini/Perplexity/Claude' },
           in_aio: { type: 'boolean', description: 'Optional: Keep keywords where ANY brand is named in the AI Overview — not necessarily this campaign\'s brand. Like every AIO/AIS filter here it reads the state as of the window\'s end date, not per-date history, so the matched count does not change with the range; for per-date AIO history use seomonitor_get_daily_keyword_ranks_ai_overview' },
-          in_ai_search: { type: 'boolean', description: 'Optional: Filter by AI Search brand presence across ChatGPT/Perplexity/Gemini' },
+          in_ai_search: { type: 'boolean', description: 'Optional: Filter by AI Search brand presence across ChatGPT/Perplexity/Gemini/Claude' },
           only_main_keywords: { type: 'boolean', description: 'Optional: true drops close variations (rows whose main_keyword_id is set) so counts match the app, whose Strategy-page cards count main keywords only. Default false — the full listing includes close variations, so an unfiltered count reads higher than the app card' },
           group_id: { type: 'string', description: 'Optional: Keyword group ID' },
           device: { type: 'string', enum: [...DEVICE_VALUES], description: 'Optional: Device for rank/SERP/AIO filters. Default desktop. The campaign may track this device to a shallower depth than the other — check primary_device and max_tracked_position_desktop/mobile from seomonitor_get_tracked_campaigns before reading a device comparison' },
@@ -310,7 +310,7 @@ export class CompositeTools {
       name: 'seomonitor_get_top_ai_search_keywords',
       title: 'Get Top AI Search Keywords',
       annotations: { title: 'Get Top AI Search Keywords', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Top keywords where a brand is present in AI Search across ChatGPT/Perplexity/Gemini. Scans the full tracked set and sorts by search volume. only_my_brand:false covers any-brand presence, competitor/source gaps, and "other brands present but not us" discovery. Each row includes keyword_id, which seomonitor_get_keyword_ai_search_data and seomonitor_get_top_cited_landing_pages accept for follow-up evidence.',
+      description: 'Top keywords where a brand is present in AI Search across ChatGPT/Perplexity/Gemini/Claude. Scans the full tracked set and sorts by search volume. only_my_brand:false covers any-brand presence, competitor/source gaps, and "other brands present but not us" discovery. Each row includes keyword_id, which seomonitor_get_keyword_ai_search_data and seomonitor_get_top_cited_landing_pages accept for follow-up evidence.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -337,7 +337,7 @@ export class CompositeTools {
           campaign_id: { type: 'integer', description: 'Required campaign ID' },
           group_id: { type: 'string', description: 'Optional: Keyword group ID' },
           ...SEGMENT_FILTER_SCHEMA,
-          ai_search_engine: { type: 'string', enum: [...AI_SEARCH_ENGINES], description: 'Optional: AI Search engine/provider for AIS widgets: openai=ChatGPT, gemini, or perplexity' },
+          ai_search_engine: { type: 'string', enum: [...AI_SEARCH_ENGINES], description: 'Optional: AI Search engine/provider for AIS widgets: openai=ChatGPT, gemini, perplexity, or claude' },
           date: { type: 'string', description: 'Optional: Snapshot date (YYYY-MM-DD) for share of voice. Defaults to end_date' },
           ...DATE_RANGE_SCHEMA,
         },
@@ -351,12 +351,12 @@ export class CompositeTools {
       name: 'seomonitor_get_ai_search_engine_performance',
       title: 'Get AI Search Engine Performance',
       annotations: { title: 'Get AI Search Engine Performance', readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-      description: 'Compare brand performance across AI Search engines: ChatGPT (openai), Gemini, and Perplexity. Suited to "ChatGPT vs Gemini vs Perplexity" questions. Returns per-engine presence/citation trend summaries, each row filtered to that engine, plus enabled_providers/active_provider for the campaign. Every row carries an "enabled" flag: enabled:false means the campaign does not track that engine. Every row also carries "access": access:not_entitled means the account cannot read this engine at group level, so that row is empty for a reason unrelated to visibility. seomonitor_get_ai_search_positioning and seomonitor_get_keyword_ai_search_data (with ai_search_llm) are gated separately and may return data for that engine.',
+      description: 'Compare brand performance across AI Search engines: ChatGPT (openai), Gemini, Perplexity, and Claude. Suited to "ChatGPT vs Gemini vs Perplexity vs Claude" questions. Returns per-engine presence/citation trend summaries, each row filtered to that engine, plus enabled_providers/active_provider for the campaign. Every row carries an "enabled" flag: enabled:false means the campaign does not track that engine. Every row also carries "access": access:not_entitled means the account cannot read this engine at group level, so that row is empty for a reason unrelated to visibility. seomonitor_get_ai_search_positioning and seomonitor_get_keyword_ai_search_data (with ai_search_llm) are gated separately and may return data for that engine.',
       inputSchema: {
         type: 'object',
         properties: {
           campaign_id: { type: 'integer', description: 'Required campaign ID' },
-          engines: { type: 'string', description: 'Optional: Comma-separated engines to compare, from openai, gemini, perplexity only. Default: all three. Use openai for ChatGPT; any other name is rejected, not guessed' },
+          engines: { type: 'string', description: 'Optional: Comma-separated engines to compare, from openai, gemini, perplexity, claude only. Default: all four. Use openai for ChatGPT; any other name is rejected, not guessed' },
           group_id: { type: 'string', description: 'Optional: Keyword group ID. Use 0 for all keywords. Defaults to 0' },
           ...DATE_RANGE_SCHEMA,
         },
