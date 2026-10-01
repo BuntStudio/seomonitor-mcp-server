@@ -109,7 +109,7 @@ Every tool is **read-only** — the server retrieves data from your SEOmonitor a
 - `seomonitor_get_daily_group_visibility_ai_overview_mentions`
 - `seomonitor_get_daily_group_visibility_ai_overview_citations`
 
-### AI Search — ChatGPT, Perplexity, Gemini visibility (5)
+### AI Search — ChatGPT, Perplexity, Gemini, Claude visibility (5)
 - `seomonitor_get_keyword_ai_search_data`
 - `seomonitor_get_keywords_competition_ai_search`
 - `seomonitor_get_daily_ai_search_keyword_ranks`
