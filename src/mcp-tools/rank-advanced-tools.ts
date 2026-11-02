@@ -293,7 +293,7 @@ export class RankAdvancedTools {
           },
           domain: {
             type: 'string',
-            description: 'Optional: Domain name for visibility calculation',
+            description: 'Optional: Competitor domain to calculate visibility for instead of the campaign\'s own site. Competitor visibility is computed day by day and is slow on large campaigns: request about a month per call and query competitors one at a time, not in parallel.',
           },
           feature_visibility: {
             type: 'string',

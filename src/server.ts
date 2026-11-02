@@ -211,6 +211,20 @@ export class MCPServer {
           user: this.sentryUser,
         });
 
+        // Assistants retried a timed-out call with identical arguments, often several in
+        // parallel, which doubled the load that caused the timeout. A tool result with
+        // isError reaches the model as text it can act on; an McpError does not.
+        const errorCode = (error as any)?.code;
+        if (errorCode === 'ECONNABORTED' || errorCode === 'ETIMEDOUT') {
+          return {
+            isError: true,
+            content: [{
+              type: 'text',
+              text: `The SEOmonitor API did not answer within ${Math.round(duration / 1000)} seconds, so this call failed. Repeating it with the same arguments will time out again. Ask for less per call: a shorter date range, one group instead of the whole campaign, or fewer keywords. For competitor visibility (the domain argument), request about a month per call and query competitors one at a time, not in parallel.`,
+            }],
+          };
+        }
+
         throw new McpError(ErrorCode.InternalError, `Tool execution failed: ${errorMessage}`);
       }
     });
